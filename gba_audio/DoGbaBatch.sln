@@ -1,11 +1,11 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MeltySynth", "MeltySynth\MeltySynth.csproj", "{035F14D3-8960-4E98-9F58-AE2F4EBA8E35}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MeltySynth", "..\ext\MeltySynth\MeltySynth\MeltySynth.csproj", "{035F14D3-8960-4E98-9F58-AE2F4EBA8E35}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DoGbaBatch", "DoGbaBatch\DoGbaBatch.csproj", "{20D12DA3-92B4-4662-BBEF-54E43D85A96C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DoGbaBatch", "DoGbaBatch.csproj", "{20D12DA3-92B4-4662-BBEF-54E43D85A96C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

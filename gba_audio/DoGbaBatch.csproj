@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../MeltySynth/MeltySynth.csproj" />
+    <ProjectReference Include="../ext/MeltySynth/MeltySynth/MeltySynth.csproj" />
   </ItemGroup>
 
 </Project>
