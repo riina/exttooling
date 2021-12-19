@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MeltySynth" Version="2.1.0" />
+    <PackageReference Include="Fp.Plus" Version="0.22.1" />
     <PackageReference Include="Ask" Version="1.2.0" />
   </ItemGroup>
 

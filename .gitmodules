@@ -1,0 +1,3 @@
+[submodule "ext/MeltySynth"]
+	path = ext/MeltySynth
+	url = https://github.com/riina/MeltySynth

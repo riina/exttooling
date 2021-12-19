@@ -1,4 +1,4 @@
-﻿using DoGbaBatch;
+﻿using Fp.Plus.Audio;
 using MeltySynth;
 
 const int sampleRate = 22050;
@@ -32,7 +32,7 @@ AR.Require("in-dir").Require("out-dir").KeyDo((r, _) =>
         sequencer.Render(left, right);
         Console.Write($"-> {to}... ");
         using var fs = File.OpenWrite(to);
-        Pcm.WritePcmWave(fs, PcmInfo.CreateFloat<float>(2, sampleRate, numSamples), left, right);
+        Wave.WriteStereoFloatWave<float>(fs, sampleRate, numSamples, left, right);
         Console.WriteLine("Done");
     }
 });
