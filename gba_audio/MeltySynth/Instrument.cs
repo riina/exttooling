@@ -25,12 +25,8 @@ namespace MeltySynth
             this.name = info.Name;
 
             var zoneCount = info.ZoneEndIndex - info.ZoneStartIndex + 1;
-            if (zoneCount <= 0)
-            {
-                throw new InvalidDataException($"The instrument '{info.Name}' has no zone.");
-            }
 
-            var zoneSpan = zones.AsSpan(info.ZoneStartIndex, zoneCount);
+            var zoneSpan = zoneCount != 0 ? zones.AsSpan(info.ZoneStartIndex, zoneCount) : Array.Empty<Zone>();
 
             regions = ImmutableArray.Create(InstrumentRegion.Create(this, zoneSpan, samples));
         }

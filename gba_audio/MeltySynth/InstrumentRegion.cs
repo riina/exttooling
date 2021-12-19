@@ -77,7 +77,7 @@ namespace MeltySynth
             Zone global = null;
 
             // Is the first one the global zone?
-            if (zones[0].Generators.Length == 0 || zones[0].Generators.Last().Type != GeneratorType.SampleID)
+            if (zones.Length != 0 && (zones[0].Generators.Length == 0 || zones[0].Generators.Last().Type != GeneratorType.SampleID))
             {
                 // The first one is the global zone.
                 global = zones[0];
