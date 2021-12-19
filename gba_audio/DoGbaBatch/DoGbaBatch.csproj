@@ -7,10 +7,14 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="MeltySynth" Version="2.1.0" />
     <PackageReference Include="Ask" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../MeltySynth/MeltySynth.csproj" />
   </ItemGroup>
 
 </Project>
