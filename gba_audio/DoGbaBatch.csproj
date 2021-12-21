@@ -9,12 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fp.Plus" Version="0.22.1" />
+    <PackageReference Include="Fp.Plus" Version="0.22.2" />
     <PackageReference Include="Ask" Version="1.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../ext/MeltySynth/MeltySynth/MeltySynth.csproj" />
+    <ProjectReference Include="../ext/GbaMus/GbaMus/GbaMus.csproj" />
   </ItemGroup>
 
 </Project>
