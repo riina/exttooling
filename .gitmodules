@@ -1,3 +1,6 @@
 [submodule "ext/MeltySynth"]
 	path = ext/MeltySynth
 	url = https://github.com/riina/MeltySynth
+[submodule "ext/GbaMus"]
+	path = ext/GbaMus
+	url = https://github.com/riina/GbaMus
