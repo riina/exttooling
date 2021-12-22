@@ -6,5 +6,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Ask" Version="1.2.0" />
+    <PackageReference Include="Fp.Plus" Version="0.22.2" />
+    <PackageReference Include="OpenTK" Version="4.6.7" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\ext\GbaMus\GbaMus\GbaMus.csproj" />
+    <ProjectReference Include="..\..\ext\MeltySynth\MeltySynth\MeltySynth.csproj" />
+  </ItemGroup>
 
 </Project>
