@@ -44,6 +44,7 @@ public sealed class MPlayer : IDisposable, IList<MSong>
             try
             {
                 if (_index >= _songs.Count) break;
+                _index = Math.Max(_index, 0);
                 song = _songs[_index];
                 guid = _songs.Guids[_index];
             }
@@ -57,21 +58,28 @@ public sealed class MPlayer : IDisposable, IList<MSong>
             _albumScroll = 0;
             _artistScroll = 0;
             Task prevTask = Task.CompletedTask;
+            int vec = 0;
             while (true)
             {
-                DrawUpdate(song, Math.Clamp(p.TimeApprox / p.Duration, 0, 1), p.Duration);
-                await Task.Delay(10);
                 await prevTask;
-                if (p.PlayState == PlayState.Ended) break;
-                int transport = 0;
                 bool playing = p.PlayState == PlayState.Playing;
                 bool setPlaying = playing;
+                DrawUpdate(song, _songs.IndexOfGuid(guid), _songs.Count, Math.Clamp(p.TimeApprox / p.Duration, 0, 1), p.Duration, playing);
+                await Task.Delay(10);
+                if (p.PlayState == PlayState.Ended) break;
+                int transport = 0;
                 bool spaceLast = false;
                 while (Console.KeyAvailable)
                 {
                     ConsoleKeyInfo cki = Console.ReadKey(true);
                     switch (cki.Key)
                     {
+                        case ConsoleKey.N:
+                            vec = -1;
+                            break;
+                        case ConsoleKey.M:
+                            vec = 1;
+                            break;
                         case ConsoleKey.LeftArrow:
                             spaceLast = false;
                             transport -= 5;
@@ -84,7 +92,21 @@ public sealed class MPlayer : IDisposable, IList<MSong>
                             spaceLast = true;
                             setPlaying ^= true;
                             break;
+                        case ConsoleKey.X:
+                            return;
                     }
+                    if (vec != 0) break;
+                }
+                if (vec != 0)
+                {
+                    if (vec == -1)
+                    {
+                        if (p.TimeApprox < 2.0)
+                            vec--;
+                    }
+                    else
+                        vec--;
+                    break;
                 }
                 if (!setPlaying && playing && spaceLast) p.Stop();
                 if (transport != 0 || setPlaying && !playing) prevTask = p.PlaySeekAsync(transport);
@@ -92,7 +114,7 @@ public sealed class MPlayer : IDisposable, IList<MSong>
             }
             try
             {
-                _index = _songs.IndexOfGuid(guid) + 1;
+                _index = _songs.IndexOfGuid(guid) + 1 + vec;
             }
             finally
             {
@@ -102,7 +124,7 @@ public sealed class MPlayer : IDisposable, IList<MSong>
         Console.Clear();
     }
 
-    private void DrawUpdate(MSong song, double percent, double duration)
+    private void DrawUpdate(MSong song, int i, int c, double percent, double duration, bool playing)
     {
         Point xy = new(Console.WindowWidth, Console.WindowHeight);
         if (_xy != xy)
@@ -124,7 +146,7 @@ public sealed class MPlayer : IDisposable, IList<MSong>
         TimeSpan elapsed = TimeSpan.FromSeconds(percent * duration);
         TimeSpan total = TimeSpan.FromSeconds(duration);
         if (my < xy.Y)
-            WriteLine(left, my++, boxSize, '┌', '┐', '─', $"{elapsed:mm\\:ss}/{total:mm\\:ss}");
+            WriteLine(left, my++, boxSize, '┌', '┐', '─', $"{i + 1}/{c}", $"{elapsed:mm\\:ss}/{total:mm\\:ss}");
         if (my < xy.Y)
             WriteBox(left, my++, boxSize, '│', '│', song.Name, _nameScroll, CrapGap);
         if (my < xy.Y)
@@ -132,7 +154,9 @@ public sealed class MPlayer : IDisposable, IList<MSong>
         if (my < xy.Y)
             WriteBox(left, my++, boxSize, '│', '│', song.Artist, _artistScroll, CrapGap);
         if (my < xy.Y)
-            WriteProgressBox(left, my, boxSize, '└', '┘', '─', '*', percent);
+            WriteProgressBox(left, my++, boxSize, '└', '┘', '─', playing ? '*' : '@', percent);
+        if (my < xy.Y)
+            WriteLine(left, my, boxSize, ' ', ' ', ' ', $"</>:jmp n/m:prev/next space:play/pause x:ex");
     }
 
     private static void WriteBox(int left, int top, int boxSize, char l, char r, string text, int scroll, int loopGap)
@@ -175,10 +199,35 @@ public sealed class MPlayer : IDisposable, IList<MSong>
         if (eaw <= boxSize - 2)
         {
             int ff = boxSize - 2 - eaw;
+            int ll = ff / 2;
             StringBuilder sb = new();
             sb.Append(l);
-            sb.Append(fill, ff);
+            sb.Append(fill, ll);
             sb.Append(text);
+            sb.Append(fill, ff - ll);
+            sb.Append(r);
+            Console.CursorLeft = left;
+            Console.CursorTop = top;
+            Console.Write(sb.ToString());
+        }
+        else
+        {
+            WriteLine(left, top, boxSize, l, r, fill);
+        }
+    }
+
+    private static void WriteLine(int left, int top, int boxSize, char l, char r, char fill, string textL, string textR)
+    {
+        int eawL = EastAsianWidth.GetWidth(textL);
+        int eawR = EastAsianWidth.GetWidth(textR);
+        if (eawL + eawR <= boxSize - 2)
+        {
+            int ff = boxSize - 2 - eawL - eawR;
+            StringBuilder sb = new();
+            sb.Append(l);
+            sb.Append(textL);
+            sb.Append(fill, ff);
+            sb.Append(textR);
             sb.Append(r);
             Console.CursorLeft = left;
             Console.CursorTop = top;
