@@ -1,11 +1,14 @@
 namespace GbaSnd;
 
-public abstract class Stereo16Generator : IDisposable
+public abstract class SoundGenerator : IDisposable
 {
+    public abstract AudioFormat Format { get; }
+
     public abstract int Frequency { get; }
+
     public abstract int Length { get; }
+
     public abstract void Reset(int sample);
-    public abstract ValueTask<int> FillBufferAsync(int samples, Memory<short> buffer, CancellationToken cancellationToken = default);
 
     protected virtual void Dispose(bool disposing)
     {
@@ -19,4 +22,9 @@ public abstract class Stereo16Generator : IDisposable
         Dispose(true);
         GC.SuppressFinalize(this);
     }
+}
+
+public abstract class SoundGenerator<TSample> : SoundGenerator where TSample : unmanaged
+{
+    public abstract ValueTask<int> FillBufferAsync(int samples, Memory<TSample> buffer, CancellationToken cancellationToken = default);
 }

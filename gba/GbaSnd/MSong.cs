@@ -6,5 +6,5 @@ public abstract class MSong
 
     protected MSong(string name) => Name = name;
 
-    public abstract Stereo16Generator GetGenerator();
+    public abstract SoundGenerator GetGenerator();
 }

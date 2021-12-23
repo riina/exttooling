@@ -7,5 +7,5 @@ public class GbaSong : MSong
 
     internal GbaSong(string name, GbaSongLoader loader, int songId) : base(name) => (_loader, _songId) = (loader, songId);
     internal GbaSong(GbaSongLoader loader, int index, int songId) : base($"Track {index} (#{songId})") => (_loader, _songId) = (loader, songId);
-    public override Stereo16Generator GetGenerator() => _loader.GetGenerator(_songId);
+    public override SoundGenerator GetGenerator() => _loader.GetGenerator(_songId);
 }

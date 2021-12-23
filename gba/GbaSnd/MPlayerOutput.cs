@@ -51,7 +51,7 @@ public sealed class MPlayerOutput : IDisposable
     private int _processedSamples;
     private int _sampleInBuffer;
 
-    private readonly Stereo16Generator _stereo16Generator;
+    private readonly SoundGenerator _generator;
     private readonly int _sampleRate;
     private readonly TextWriter? _debug;
     private readonly Dictionary<int, int> _sampleSizes;
@@ -66,11 +66,11 @@ public sealed class MPlayerOutput : IDisposable
         public void Stop() => Cts.Cancel();
     }
 
-    internal MPlayerOutput(Stereo16Generator stereo16Generator, TextWriter? debug = null)
+    internal MPlayerOutput(SoundGenerator generator, TextWriter? debug = null)
     {
-        _stereo16Generator = stereo16Generator;
-        _sampleRate = _stereo16Generator.Frequency;
-        Length = _stereo16Generator.Length;
+        _generator = generator;
+        _sampleRate = _generator.Frequency;
+        Length = _generator.Length;
         _source = AL.GenSource();
         Ce();
         _sampleSizes = new Dictionary<int, int>();
@@ -138,7 +138,7 @@ public sealed class MPlayerOutput : IDisposable
     {
         _baseSample = sample;
         _processedSamples = 0;
-        _stereo16Generator.Reset(sample);
+        _generator.Reset(sample);
         CancellationTokenSource cts = new();
         Task streamData = StreamData(cts.Token);
         return new ActiveSession(streamData, cts);
@@ -148,6 +148,66 @@ public sealed class MPlayerOutput : IDisposable
     {
         EnsureState();
         return GetPlayTaskResetIfComplete();
+    }
+
+    private async Task<int> QueueAsync(int wantedSamples, CancellationToken cancellationToken = default)
+    {
+        return _generator switch
+        {
+            SoundGenerator<byte> s => await QueueAsync(s, wantedSamples, cancellationToken),
+            SoundGenerator<sbyte> s => await QueueAsync(s, wantedSamples, cancellationToken),
+            SoundGenerator<short> s => await QueueAsync(s, wantedSamples, cancellationToken),
+            SoundGenerator<ushort> s => await QueueAsync(s, wantedSamples, cancellationToken),
+            _ => throw new ArgumentException()
+        };
+    }
+
+    private async Task<int> QueueAsync<TSample>(SoundGenerator<TSample> generator, int wantedSamples, CancellationToken cancellationToken = default) where TSample : unmanaged
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        (int numChannels, ALFormat format) = generator.Format switch
+        {
+            AudioFormat.Pcm8X1 => (1, ALFormat.Mono8),
+            AudioFormat.Pcm8X2 => (2, ALFormat.Stereo8),
+            AudioFormat.Pcm16X1 => (1, ALFormat.Mono16),
+            AudioFormat.Pcm16X2 => (2, ALFormat.Stereo16),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+        int elementCount = wantedSamples * numChannels;
+        TSample[] dataTmp = ArrayPool<TSample>.Shared.Rent(elementCount);
+        int samples;
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_debug != null) await _debug.WriteAsync("Waiting for buffer... ");
+            samples = await generator.FillBufferAsync(wantedSamples, dataTmp.AsMemory(0, elementCount), cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        finally
+        {
+            ArrayPool<TSample>.Shared.Return(dataTmp);
+        }
+        if (_debug != null) await _debug.WriteLineAsync($"{samples} samples");
+        if (samples <= 0) return 0;
+        Memory<TSample> data = dataTmp.AsMemory(0, samples * numChannels);
+        int buf = AL.GenBuffer();
+        Ce();
+        AL.BufferData(buf, format, data.Span, _sampleRate);
+        Ce();
+        cancellationToken.ThrowIfCancellationRequested();
+        _are.WaitOne();
+        try
+        {
+            AL.SourceQueueBuffer(_source, buf);
+            Ce();
+            _sameDesu = true;
+        }
+        finally
+        {
+            _are.Set();
+        }
+        _sampleSizes[buf] = samples;
+        return samples;
     }
 
     private async Task StreamData(CancellationToken cancellationToken = default)
@@ -162,43 +222,9 @@ public sealed class MPlayerOutput : IDisposable
                 int samplesFilled = 0;
                 while (samplesFilled < BufferSizeInSamples)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    int wantedSamples = BufferSizeInSamples - samplesFilled;
-                    int elementCount = wantedSamples * 2;
-                    short[] dataTmp = ArrayPool<short>.Shared.Rent(elementCount);
-                    int samples;
-                    try
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        if (_debug != null) await _debug.WriteAsync("Waiting for buffer... ");
-                        samples = await _stereo16Generator.FillBufferAsync(wantedSamples, dataTmp.AsMemory(0, elementCount), cancellationToken);
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
-                    finally
-                    {
-                        ArrayPool<short>.Shared.Return(dataTmp);
-                    }
-                    if (_debug != null) await _debug.WriteLineAsync($"{samples} samples");
+                    int samples = await QueueAsync(BufferSizeInSamples - samplesFilled, cancellationToken);
                     if (samples <= 0) break;
-                    Memory<short> data = dataTmp.AsMemory(0, samples * 2);
-                    int buf = AL.GenBuffer();
-                    Ce();
-                    AL.BufferData(buf, ALFormat.Stereo16, data.Span, _sampleRate);
-                    Ce();
-                    cancellationToken.ThrowIfCancellationRequested();
-                    _are.WaitOne();
-                    try
-                    {
-                        AL.SourceQueueBuffer(_source, buf);
-                        Ce();
-                        _sameDesu = true;
-                    }
-                    finally
-                    {
-                        _are.Set();
-                    }
                     samplesFilled += samples;
-                    _sampleSizes[buf] = samples;
                 }
                 if (samplesFilled <= 0) break;
                 if (preBufferLeft > 0)

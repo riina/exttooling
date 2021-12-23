@@ -30,10 +30,10 @@ public sealed class MPlayerContext : IDisposable
         if (_context.Handle == IntPtr.Zero) throw new ObjectDisposedException(nameof(MPlayerContext));
     }
 
-    public MPlayerOutput Stream(Stereo16Generator stereo16Generator, TextWriter? debug = null)
+    public MPlayerOutput Stream(SoundGenerator soundGenerator, TextWriter? debug = null)
     {
         EnsureState();
-        return new MPlayerOutput(stereo16Generator, debug);
+        return new MPlayerOutput(soundGenerator, debug);
     }
 
     private void ReleaseUnmanagedResources()
