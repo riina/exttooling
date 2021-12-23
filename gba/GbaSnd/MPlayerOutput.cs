@@ -92,7 +92,7 @@ public sealed class MPlayerOutput : IDisposable
         sample = ClampSample(sample);
         EnsureState();
         DestroyCurrentTask();
-        if (sample + 1 >= Length)
+        if (sample + _sampleRate * 1 >= Length)
         {
             _ended = true;
             return;
@@ -250,7 +250,7 @@ public sealed class MPlayerOutput : IDisposable
             _are.WaitOne();
             try
             {
-                while (true)
+                while (PlayState == PlayState.Playing)
                 {
                     AL.GetSource(_source, ALGetSourcei.BuffersQueued, out int queued);
                     Ce();
@@ -296,7 +296,8 @@ public sealed class MPlayerOutput : IDisposable
         {
             if (_sameDesu) _sameDesu = false;
             else return;
-            while (true)
+            int runs = 100;
+            while (runs-- > 0)
             {
                 AL.GetSource(_source, ALGetSourcei.BuffersProcessed, out int processed);
                 Ce();

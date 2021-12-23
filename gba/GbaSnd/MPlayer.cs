@@ -57,11 +57,9 @@ public sealed class MPlayer : IDisposable, IList<MSong>
             _nameScroll = 0;
             _albumScroll = 0;
             _artistScroll = 0;
-            Task prevTask = Task.CompletedTask;
             int vec = 0;
             while (true)
             {
-                await prevTask;
                 bool playing = p.PlayState == PlayState.Playing;
                 bool setPlaying = playing;
                 DrawUpdate(song, _songs.IndexOfGuid(guid), _songs.Count, Math.Clamp(p.TimeApprox / p.Duration, 0, 1), p.Duration, playing);
@@ -109,8 +107,7 @@ public sealed class MPlayer : IDisposable, IList<MSong>
                     break;
                 }
                 if (!setPlaying && playing && spaceLast) p.Stop();
-                if (transport != 0 || setPlaying && !playing) prevTask = p.PlaySeekAsync(transport);
-                else prevTask = Task.CompletedTask;
+                if (transport != 0 || setPlaying && !playing) await p.PlaySeekAsync(transport);
             }
             try
             {
