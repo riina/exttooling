@@ -97,6 +97,11 @@ public sealed class PCtx : IDisposable
         }
     }
 
+    public Task StartSeekAsync(double deltaTime = 0, CancellationToken cancellationToken = default)
+    {
+        return StartAsync(Time + deltaTime, cancellationToken);
+    }
+
     private int GetSampleFromTime(double time) => (int)(time * _sampleRate);
 
     private double GetTimeFromSample(int sample) => sample / (double)_sampleRate;
@@ -129,13 +134,17 @@ public sealed class PCtx : IDisposable
                 int samplesFilled = 0;
                 while (samplesFilled < BufferSizeInSamples)
                 {
-                    int elementCount = (BufferSizeInSamples - samplesFilled) * 2;
+                    cancellationToken.ThrowIfCancellationRequested();
+                    int wantedSamples = BufferSizeInSamples - samplesFilled;
+                    int elementCount = wantedSamples * 2;
                     short[] dataTmp = ArrayPool<short>.Shared.Rent(elementCount);
-                    if (_debug != null) await _debug.WriteAsync("Waiting for buffer... ");
                     int samples;
                     try
                     {
-                        samples = await _stereo16StreamGenerator.FillBufferAsync(dataTmp.AsMemory(0, elementCount), cancellationToken);
+                        cancellationToken.ThrowIfCancellationRequested();
+                        if (_debug != null) await _debug.WriteAsync("Waiting for buffer... ");
+                        samples = await _stereo16StreamGenerator.FillBufferAsync(wantedSamples, dataTmp.AsMemory(0, elementCount), cancellationToken);
+                        cancellationToken.ThrowIfCancellationRequested();
                     }
                     finally
                     {
@@ -148,6 +157,7 @@ public sealed class PCtx : IDisposable
                     Ce();
                     AL.BufferData(buf, ALFormat.Stereo16, data.Span, _sampleRate);
                     Ce();
+                    cancellationToken.ThrowIfCancellationRequested();
                     _are.WaitOne();
                     try
                     {

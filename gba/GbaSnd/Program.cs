@@ -37,7 +37,7 @@ await AR.Require("gba").Require("id").KeyDoAsync(async (r, _) =>
     await p.StartAsync(2);
     Console.WriteLine("Restarted playback");
 
-    await Task.Delay(TimeSpan.FromSeconds(3));
+    await Task.Delay(TimeSpan.FromSeconds(6));
 
     Console.WriteLine($"Restarting playback (was at {p.Time})");
     await p.StartAsync();
