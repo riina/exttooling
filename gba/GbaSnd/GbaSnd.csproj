@@ -11,6 +11,7 @@
     <PackageReference Include="Ask" Version="1.2.0" />
     <PackageReference Include="Fp.Plus" Version="0.22.2" />
     <PackageReference Include="OpenTK" Version="4.6.7" />
+    <PackageReference Include="EA" Version="1.1.1" />
   </ItemGroup>
   
   <ItemGroup>

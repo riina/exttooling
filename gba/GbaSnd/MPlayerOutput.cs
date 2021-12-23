@@ -28,14 +28,13 @@ public sealed class MPlayerOutput : IDisposable
         }
     }
 
-    public double Time => GetTimeFromSample(Sample);
+    public double TimeApprox => GetTimeFromSample(Sample);
 
     public int Sample
     {
         get
         {
             EnsureState();
-            WaitForBuffersAsync().Wait();
             if (GetPlayTaskResetIfComplete().IsCompleted) return _baseSample + _processedSamples + _sampleInBuffer;
             AL.GetSource(_source, ALGetSourcei.SampleOffset, out int sample);
             Ce();
@@ -118,7 +117,7 @@ public sealed class MPlayerOutput : IDisposable
 
     public Task PlaySeekAsync(double deltaTime = 0, CancellationToken cancellationToken = default)
     {
-        return PlayAsync(Time + deltaTime, cancellationToken);
+        return PlayAsync(TimeApprox + deltaTime, cancellationToken);
     }
 
 
