@@ -3,7 +3,7 @@ using OpenTK.Audio.OpenAL;
 
 namespace GbaSnd;
 
-public sealed class PCtx : IDisposable
+public sealed class MPlayerOutput : IDisposable
 {
     private const int BufferSizeInSamples = 8 * 1024;
     private const double PreBufferInSeconds = 0.5;
@@ -51,7 +51,7 @@ public sealed class PCtx : IDisposable
     private int _processedSamples;
     private int _sampleInBuffer;
 
-    private readonly Stereo16StreamGenerator _stereo16StreamGenerator;
+    private readonly Stereo16Generator _stereo16Generator;
     private readonly int _sampleRate;
     private readonly TextWriter? _debug;
     private readonly Dictionary<int, int> _sampleSizes;
@@ -66,11 +66,11 @@ public sealed class PCtx : IDisposable
         public void Stop() => Cts.Cancel();
     }
 
-    internal PCtx(Stereo16StreamGenerator stereo16StreamGenerator, TextWriter? debug = null)
+    internal MPlayerOutput(Stereo16Generator stereo16Generator, TextWriter? debug = null)
     {
-        _stereo16StreamGenerator = stereo16StreamGenerator;
-        _sampleRate = _stereo16StreamGenerator.Frequency;
-        Length = _stereo16StreamGenerator.Length;
+        _stereo16Generator = stereo16Generator;
+        _sampleRate = _stereo16Generator.Frequency;
+        Length = _stereo16Generator.Length;
         _source = AL.GenSource();
         Ce();
         _sampleSizes = new Dictionary<int, int>();
@@ -138,7 +138,7 @@ public sealed class PCtx : IDisposable
     {
         _baseSample = sample;
         _processedSamples = 0;
-        _stereo16StreamGenerator.Reset(sample);
+        _stereo16Generator.Reset(sample);
         CancellationTokenSource cts = new();
         Task streamData = StreamData(cts.Token);
         return new ActiveSession(streamData, cts);
@@ -171,7 +171,7 @@ public sealed class PCtx : IDisposable
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         if (_debug != null) await _debug.WriteAsync("Waiting for buffer... ");
-                        samples = await _stereo16StreamGenerator.FillBufferAsync(wantedSamples, dataTmp.AsMemory(0, elementCount), cancellationToken);
+                        samples = await _stereo16Generator.FillBufferAsync(wantedSamples, dataTmp.AsMemory(0, elementCount), cancellationToken);
                         cancellationToken.ThrowIfCancellationRequested();
                     }
                     finally
@@ -293,7 +293,7 @@ public sealed class PCtx : IDisposable
 
     private void EnsureState()
     {
-        if (_source == 0) throw new ObjectDisposedException(nameof(PCtx));
+        if (_source == 0) throw new ObjectDisposedException(nameof(MPlayerOutput));
     }
 
     private Task GetPlayTaskResetIfComplete()
@@ -360,5 +360,5 @@ public sealed class PCtx : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    ~PCtx() => ReleaseUnmanagedResources();
+    ~MPlayerOutput() => ReleaseUnmanagedResources();
 }

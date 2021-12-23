@@ -1,60 +1,40 @@
-﻿using GbaMus;
-using GbaSnd;
-using MeltySynth;
+﻿using GbaSnd;
 
-const int sampleRate = 22050;
-
-await AR.Require("gba").Require("id").KeyDoAsync(async (r, _) =>
+await AR.Require("gba").Optional("id").DoAsync(async l =>
 {
-    string gba = Path.GetFullPath(r["gba"]), id = r["id"];
+    string gba = Path.GetFullPath(l[0]);
     if (!File.Exists(gba)) AR.Exit($"{gba}: does not exist", 2);
-    if (!int.TryParse(id, out int songId)) AR.Exit("invalid id format");
-    MemoryRipper mr;
-    using (FileStream ms = File.OpenRead(gba)) mr = new MemoryRipper(ms, new GbaMusRipper.Settings());
-    MemoryStream soundfontStream = new();
-    mr.WriteSoundFont(soundfontStream);
-    soundfontStream.Position = 0;
-    var synthesizer = new Synthesizer(new SoundFont(soundfontStream), sampleRate);
-    if (!mr.Songs.Contains(songId)) AR.Exit("Invalid song");
-    MemoryStream songStream = new();
-    mr.WriteMidi(songStream, songId);
-    songStream.Position = 0;
-    MidiFile midiFile = new(songStream);
-    using MCtx c = new();
-    var sg = new MidiStereo16StreamGenerator(new MidiFileSequencer(synthesizer), midiFile, sampleRate, midiFile.Length.TotalSeconds);
-    using PCtx p = c.Stream(sg);
-    Console.WriteLine($"{p.Duration}");
-    await p.PlayAsync();
-    Task prevTask = Task.CompletedTask;
-    while (true)
+    List<int> indices = new();
+    foreach (string s in l.Skip(1))
     {
-        await prevTask;
-        if (p.PlayState == PlayState.Ended) break;
-        int transport = 0;
-        bool playing = p.PlayState == PlayState.Playing;
-        bool setPlaying = playing;
-        bool spaceLast = false;
-        while (Console.KeyAvailable)
+        if (s is not { } indexS || !int.TryParse(indexS, out int songIdv))
         {
-            ConsoleKeyInfo cki = Console.ReadKey(true);
-            switch (cki.Key)
-            {
-                case ConsoleKey.LeftArrow:
-                    spaceLast = false;
-                    transport -= 5;
-                    break;
-                case ConsoleKey.RightArrow:
-                    spaceLast = false;
-                    transport += 5;
-                    break;
-                case ConsoleKey.Spacebar:
-                    spaceLast = true;
-                    setPlaying ^= true;
-                    break;
-            }
+            AR.Exit($"{s}: invalid id format");
+            return;
         }
-        if (!setPlaying && playing && spaceLast) p.Stop();
-        if (transport != 0 || setPlaying && !playing) prevTask = p.PlaySeekAsync(transport);
-        else prevTask = Task.CompletedTask;
+        indices.Add(songIdv);
     }
+    GbaSongLoader gsl;
+    await using (FileStream fs = File.OpenRead(gba)) gsl = new GbaSongLoader(fs);
+    if (!indices.Any())
+    {
+        foreach (var s in gsl.Songs)
+        {
+            Console.WriteLine(s.Name);
+        }
+        return;
+    }
+    List<GbaSong> songs = new();
+    foreach (int i in indices)
+    {
+        if (i < 0 || i >= gsl.Songs.Count)
+        {
+            AR.Exit("Invalid song");
+            return;
+        }
+        songs.Add(gsl.Songs[i]);
+    }
+    using MPlayer mp = new();
+    mp.Songs.AddRange(songs);
+    await mp.ExecuteAsync();
 });

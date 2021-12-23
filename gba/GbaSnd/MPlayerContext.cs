@@ -2,12 +2,12 @@ using OpenTK.Audio.OpenAL;
 
 namespace GbaSnd;
 
-public sealed class MCtx : IDisposable
+public sealed class MPlayerContext : IDisposable
 {
     private ALDevice _dev;
     private ALContext _context;
 
-    public MCtx()
+    public MPlayerContext()
     {
         _dev = ALC.OpenDevice(null);
         _context = ALC.CreateContext(_dev, new ALContextAttributes());
@@ -27,13 +27,13 @@ public sealed class MCtx : IDisposable
 
     private void EnsureState()
     {
-        if (_context.Handle == IntPtr.Zero) throw new ObjectDisposedException(nameof(MCtx));
+        if (_context.Handle == IntPtr.Zero) throw new ObjectDisposedException(nameof(MPlayerContext));
     }
 
-    public PCtx Stream(Stereo16StreamGenerator stereo16StreamGenerator, TextWriter? debug = null)
+    public MPlayerOutput Stream(Stereo16Generator stereo16Generator, TextWriter? debug = null)
     {
         EnsureState();
-        return new PCtx(stereo16StreamGenerator, debug);
+        return new MPlayerOutput(stereo16Generator, debug);
     }
 
     private void ReleaseUnmanagedResources()
@@ -51,5 +51,5 @@ public sealed class MCtx : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    ~MCtx() => ReleaseUnmanagedResources();
+    ~MPlayerContext() => ReleaseUnmanagedResources();
 }

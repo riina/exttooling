@@ -2,7 +2,7 @@ using MeltySynth;
 
 namespace GbaSnd;
 
-public class MidiStereo16StreamGenerator : Stereo16StreamGenerator
+public class MidiStereo16Generator : Stereo16Generator
 {
     private const int CacheBufferSamples = 8 * 1024;
     private const int MaxCacheBufferSeconds = 10;
@@ -18,7 +18,7 @@ public class MidiStereo16StreamGenerator : Stereo16StreamGenerator
     public override int Frequency { get; }
     public override int Length { get; }
 
-    public MidiStereo16StreamGenerator(MidiFileSequencer sequencer, MidiFile midi, int sampleRate, double duration)
+    public MidiStereo16Generator(MidiFileSequencer sequencer, MidiFile midi, int sampleRate, double duration)
     {
         _sequencer = sequencer;
         _midi = midi;
