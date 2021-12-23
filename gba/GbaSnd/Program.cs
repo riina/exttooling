@@ -35,6 +35,7 @@ await AR.Require("gba").Optional("id").DoAsync(async l =>
         songs.Add(gsl.Songs[i]);
     }
     using MPlayer mp = new();
-    mp.Songs.AddRange(songs);
+    foreach (GbaSong song in songs)
+        mp.Add(song);
     await mp.ExecuteAsync();
 });
