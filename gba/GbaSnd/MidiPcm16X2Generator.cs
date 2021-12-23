@@ -47,13 +47,13 @@ public class MidiPcm16X2Generator : Pcm16X2Generator
     {
         if (samples <= 0) return 0;
         int numSamples;
-        if (_iSample > _oSample) ResetPlayer();
         if (TryGetCacheBuffer(_oSample, out int eSamples, out Memory<short> eBuffer))
         {
             numSamples = Math.Min(samples, eSamples);
         }
         else
         {
+            if (_iSample > _oSample) ResetPlayer();
             int iSample;
             do
             {

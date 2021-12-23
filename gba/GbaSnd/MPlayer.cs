@@ -8,6 +8,7 @@ namespace GbaSnd;
 
 public sealed class MPlayer : IDisposable, IList<MSong>
 {
+    private const int CrapGap = 33;
     private const int MaxBoxWidth = 50;
     private readonly TaggedPlaylist _songs;
     private readonly MPlayerContext _mPlayerContext;
@@ -58,7 +59,7 @@ public sealed class MPlayer : IDisposable, IList<MSong>
             Task prevTask = Task.CompletedTask;
             while (true)
             {
-                DrawUpdate(song, Math.Clamp(p.TimeApprox / p.Duration, 0, 1));
+                DrawUpdate(song, Math.Clamp(p.TimeApprox / p.Duration, 0, 1), p.Duration);
                 await Task.Delay(10);
                 await prevTask;
                 if (p.PlayState == PlayState.Ended) break;
@@ -101,15 +102,8 @@ public sealed class MPlayer : IDisposable, IList<MSong>
         Console.Clear();
     }
 
-    private void DrawUpdate(MSong song, double percent)
+    private void DrawUpdate(MSong song, double percent, double duration)
     {
-        if (_sw.Elapsed.TotalSeconds >= 0.1)
-        {
-            MoveScroll(song.Name, ref _nameScroll, 7);
-            MoveScroll(song.Album, ref _albumScroll, 7);
-            MoveScroll(song.Artist, ref _artistScroll, 7);
-            _sw.Restart();
-        }
         Point xy = new(Console.WindowWidth, Console.WindowHeight);
         if (_xy != xy)
         {
@@ -119,15 +113,24 @@ public sealed class MPlayer : IDisposable, IList<MSong>
         int my = Math.Max(xy.Y / 2 - 3, 0);
         int boxSize = Math.Min(MaxBoxWidth, xy.X);
         if (boxSize <= 4) return;
+        if (_sw.Elapsed.TotalSeconds >= 0.1)
+        {
+            MoveScroll(song.Name, boxSize, ref _nameScroll, CrapGap);
+            MoveScroll(song.Album, boxSize, ref _albumScroll, CrapGap);
+            MoveScroll(song.Artist, boxSize, ref _artistScroll, CrapGap);
+            _sw.Restart();
+        }
         int left = (xy.X - boxSize) / 2;
+        TimeSpan elapsed = TimeSpan.FromSeconds(percent * duration);
+        TimeSpan total = TimeSpan.FromSeconds(duration);
         if (my < xy.Y)
-            WriteLine(left, my++, boxSize, '┌', '┐', '─');
+            WriteLine(left, my++, boxSize, '┌', '┐', '─', $"{elapsed:mm\\:ss}/{total:mm\\:ss}");
         if (my < xy.Y)
-            WriteBox(left, my++, boxSize, '│', '│', song.Name, _nameScroll, 7);
+            WriteBox(left, my++, boxSize, '│', '│', song.Name, _nameScroll, CrapGap);
         if (my < xy.Y)
-            WriteBox(left, my++, boxSize, '│', '│', song.Album, _albumScroll, 7);
+            WriteBox(left, my++, boxSize, '│', '│', song.Album, _albumScroll, CrapGap);
         if (my < xy.Y)
-            WriteBox(left, my++, boxSize, '│', '│', song.Artist, _artistScroll, 7);
+            WriteBox(left, my++, boxSize, '│', '│', song.Artist, _artistScroll, CrapGap);
         if (my < xy.Y)
             WriteProgressBox(left, my, boxSize, '└', '┘', '─', '*', percent);
     }
@@ -136,7 +139,19 @@ public sealed class MPlayer : IDisposable, IList<MSong>
     {
         StringBuilder sb = new();
         sb.Append(l);
-        PopulateWidth(sb, text, boxSize - 2, scroll, loopGap);
+        int eaw = EastAsianWidth.GetWidth(text);
+        if (eaw <= boxSize - 2)
+        {
+            int ww = boxSize - 2 - eaw;
+            int ll = ww / 2;
+            sb.Append(' ', ll);
+            sb.Append(text);
+            sb.Append(' ', ww - ll);
+        }
+        else
+        {
+            PopulateWidth(sb, text, boxSize - 2, scroll, loopGap);
+        }
         sb.Append(r);
         Console.CursorLeft = left;
         Console.CursorTop = top;
@@ -153,6 +168,28 @@ public sealed class MPlayer : IDisposable, IList<MSong>
         Console.CursorTop = top;
         Console.Write(sb.ToString());
     }
+
+    private static void WriteLine(int left, int top, int boxSize, char l, char r, char fill, string text)
+    {
+        int eaw = EastAsianWidth.GetWidth(text);
+        if (eaw <= boxSize - 2)
+        {
+            int ff = boxSize - 2 - eaw;
+            StringBuilder sb = new();
+            sb.Append(l);
+            sb.Append(fill, ff);
+            sb.Append(text);
+            sb.Append(r);
+            Console.CursorLeft = left;
+            Console.CursorTop = top;
+            Console.Write(sb.ToString());
+        }
+        else
+        {
+            WriteLine(left, top, boxSize, l, r, fill);
+        }
+    }
+
 
     private static void WriteProgressBox(int left, int top, int boxSize, char l, char r, char fill, char playHead, double percent)
     {
@@ -193,8 +230,13 @@ public sealed class MPlayer : IDisposable, IList<MSong>
         return true;
     }*/
 
-    private static void MoveScroll(string text, ref int scroll, int loopGap)
+    private static void MoveScroll(string text, int boxSize, ref int scroll, int loopGap)
     {
+        if (EastAsianWidth.GetWidth(text) <= boxSize - 2)
+        {
+            scroll = 0;
+            return;
+        }
         if (scroll >= text.Length + loopGap - 1) scroll = 0;
         else if (scroll >= text.Length) scroll++;
         else if (char.IsHighSurrogate(text[scroll])) scroll += 2;

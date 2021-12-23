@@ -237,6 +237,11 @@ public sealed class MPlayerOutput : IDisposable
                 }
                 else
                 {
+                    if (PlayState != PlayState.Playing)
+                    {
+                        AL.SourceStop(_source);
+                        AL.SourcePlay(_source);
+                    }
                     // Wait for at least one buffer to finish processing
                     await WaitForBuffersAsync(cancellationToken);
                 }
