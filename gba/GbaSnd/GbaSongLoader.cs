@@ -43,6 +43,6 @@ public class GbaSongLoader
         _mr.WriteMidi(songStream, songId);
         songStream.Position = 0;
         MidiFile midiFile = new(songStream);
-        return new MidiStereo16Generator(_sequencer, midiFile, SampleRate, midiFile.Length.Seconds);
+        return new MidiStereo16Generator(_sequencer, midiFile, SampleRate, midiFile.Length.TotalSeconds);
     }
 }

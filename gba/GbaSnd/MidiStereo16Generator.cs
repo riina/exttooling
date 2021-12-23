@@ -76,10 +76,11 @@ public class MidiStereo16Generator : Stereo16Generator
     private int ReadAndCache(int samples, Memory<short> buffer)
     {
         int available = _numSamples - _iSample;
-        if (available == 0) return available;
+        if (available <= 0) return 0;
         int numSamples = Math.Min(samples, available);
         _sequencer.RenderInterleavedInt16(buffer.Span[..(numSamples * 2)]);
         if (!_cache.ContainsKey(_iSample)) _cache.Add(_iSample, new CacheBuffer(new Range(_iSample, _iSample + numSamples), numSamples, buffer[..(numSamples * 2)]));
+        _iSample += numSamples;
         while (_cache.Count * CacheBufferSamples / (double)Frequency > MaxCacheBufferSeconds)
         {
             if (Math.Abs(_cache.Keys[0] - _iSample) > Math.Abs(_cache.Keys[^1] - _iSample))
@@ -87,7 +88,6 @@ public class MidiStereo16Generator : Stereo16Generator
             else
                 _cache.RemoveAt(_cache.Count - 1);
         }
-        _iSample += numSamples;
         return numSamples;
     }
 

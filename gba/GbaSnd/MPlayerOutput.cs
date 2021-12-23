@@ -98,8 +98,8 @@ public sealed class MPlayerOutput : IDisposable
             _ended = true;
             return;
         }
-        _activeSession = StartStreamData(ClampSample(sample));
         _ended = false;
+        _activeSession = StartStreamData(ClampSample(sample));
         while (true)
         {
             PlayState ps = PlayState;

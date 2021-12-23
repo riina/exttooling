@@ -21,7 +21,7 @@ public sealed class MPlayer : IDisposable, IList<MSong>
         _are.WaitOne();
         _index = 0;
         _are.Set();
-        while(true)
+        while (true)
         {
             MSong song;
             Guid guid;
@@ -31,41 +31,48 @@ public sealed class MPlayer : IDisposable, IList<MSong>
                 if (_index >= _songs.Count) break;
                 song = _songs[_index];
                 guid = _songs.Guids[_index];
-                using MPlayerOutput p = _mPlayerContext.Stream(song.GetGenerator());
-                await p.PlayAsync();
-                Task prevTask = Task.CompletedTask;
-                while (true)
+            }
+            finally
+            {
+                _are.Set();
+            }
+            using MPlayerOutput p = _mPlayerContext.Stream(song.GetGenerator());
+            await p.PlayAsync();
+            Task prevTask = Task.CompletedTask;
+            while (true)
+            {
+                await Task.Delay(10);
+                await prevTask;
+                if (p.PlayState == PlayState.Ended) break;
+                int transport = 0;
+                bool playing = p.PlayState == PlayState.Playing;
+                bool setPlaying = playing;
+                bool spaceLast = false;
+                while (Console.KeyAvailable)
                 {
-                    await Task.Delay(10);
-                    await prevTask;
-                    if (p.PlayState == PlayState.Ended) break;
-                    int transport = 0;
-                    bool playing = p.PlayState == PlayState.Playing;
-                    bool setPlaying = playing;
-                    bool spaceLast = false;
-                    while (Console.KeyAvailable)
+                    ConsoleKeyInfo cki = Console.ReadKey(true);
+                    switch (cki.Key)
                     {
-                        ConsoleKeyInfo cki = Console.ReadKey(true);
-                        switch (cki.Key)
-                        {
-                            case ConsoleKey.LeftArrow:
-                                spaceLast = false;
-                                transport -= 5;
-                                break;
-                            case ConsoleKey.RightArrow:
-                                spaceLast = false;
-                                transport += 5;
-                                break;
-                            case ConsoleKey.Spacebar:
-                                spaceLast = true;
-                                setPlaying ^= true;
-                                break;
-                        }
+                        case ConsoleKey.LeftArrow:
+                            spaceLast = false;
+                            transport -= 5;
+                            break;
+                        case ConsoleKey.RightArrow:
+                            spaceLast = false;
+                            transport += 5;
+                            break;
+                        case ConsoleKey.Spacebar:
+                            spaceLast = true;
+                            setPlaying ^= true;
+                            break;
                     }
-                    if (!setPlaying && playing && spaceLast) p.Stop();
-                    if (transport != 0 || setPlaying && !playing) prevTask = p.PlaySeekAsync(transport);
-                    else prevTask = Task.CompletedTask;
                 }
+                if (!setPlaying && playing && spaceLast) p.Stop();
+                if (transport != 0 || setPlaying && !playing) prevTask = p.PlaySeekAsync(transport);
+                else prevTask = Task.CompletedTask;
+            }
+            try
+            {
                 _index = _songs.IndexOfGuid(guid) + 1;
             }
             finally
