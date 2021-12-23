@@ -23,13 +23,27 @@ await AR.Require("gba").Require("id").KeyDoAsync(async (r, _) =>
     using MCtx c = new();
     var sg = new MidiStereo16StreamGenerator(new MidiFileSequencer(synthesizer), midiFile, sampleRate, midiFile.Length.TotalSeconds);
     using PCtx p = c.Stream(sg);
-    Console.WriteLine("Starting playback");
+    Console.WriteLine($"Starting playback (duration {p.Duration})");
     await p.StartAsync();
     Console.WriteLine("Started playback");
+
+    await Task.Delay(TimeSpan.FromSeconds(2));
+
+    Console.WriteLine($"Current at {p.Time}");
+
+    await Task.Delay(TimeSpan.FromSeconds(1));
+
+    Console.WriteLine($"Restarting playback (was at {p.Time})");
+    await p.StartAsync(2);
+    Console.WriteLine("Restarted playback");
+
     await Task.Delay(TimeSpan.FromSeconds(3));
-    Console.WriteLine("Restarting playback");
+
+    Console.WriteLine($"Restarting playback (was at {p.Time})");
     await p.StartAsync();
     Console.WriteLine("Restarted playback");
-    //await p.GetPlayTask();
-    while (p.PlayState == PlayState.Playing) await Task.Delay(10);
+
+    await p.GetPlayTask();
+
+    Console.WriteLine($"Ended playback (was at {p.Time})");
 });

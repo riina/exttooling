@@ -27,9 +27,35 @@ public sealed class PCtx : IDisposable
         }
     }
 
+    public double Time => GetTimeFromSample(Sample);
+
+    public int Sample
+    {
+        get
+        {
+            EnsureState();
+            WaitForBuffersAsync().Wait();
+            if (GetPlayTaskResetIfComplete().IsCompleted) return _baseSample + _processedSamples + _sampleInBuffer;
+            AL.GetSource(_source, ALGetSourcei.SampleOffset, out int sample);
+            Ce();
+            return _baseSample + _processedSamples + (_sampleInBuffer = sample);
+        }
+    }
+
+    public double Duration => GetTimeFromSample(Length);
+
+    public int Length { get; }
+
+    private bool _sameDesu;
+    private int _processedSamples;
+    private int _sampleInBuffer;
+
     private readonly Stereo16StreamGenerator _stereo16StreamGenerator;
     private readonly int _sampleRate;
     private readonly TextWriter? _debug;
+    private readonly Dictionary<int, int> _sampleSizes;
+    private readonly AutoResetEvent _are;
+    private int _baseSample;
     private int _source;
     private ActiveSession? _activeSession;
 
@@ -42,16 +68,19 @@ public sealed class PCtx : IDisposable
     {
         _stereo16StreamGenerator = stereo16StreamGenerator;
         _sampleRate = _stereo16StreamGenerator.Frequency;
+        Length = _stereo16StreamGenerator.Length;
         _source = AL.GenSource();
         Ce();
+        _sampleSizes = new Dictionary<int, int>();
+        _are = new AutoResetEvent(true);
         _debug = debug;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken = default)
+    public async Task StartAsync(double time = 0, CancellationToken cancellationToken = default)
     {
         EnsureState();
         DestroyCurrentTask();
-        _activeSession = StartStreamData();
+        _activeSession = StartStreamData(GetSampleFromTime(time));
         while (true)
         {
             PlayState ps = PlayState;
@@ -68,9 +97,15 @@ public sealed class PCtx : IDisposable
         }
     }
 
-    private ActiveSession StartStreamData()
+    private int GetSampleFromTime(double time) => (int)(time * _sampleRate);
+
+    private double GetTimeFromSample(int sample) => sample / (double)_sampleRate;
+
+    private ActiveSession StartStreamData(int sample)
     {
-        _stereo16StreamGenerator.Reset();
+        _baseSample = sample;
+        _processedSamples = 0;
+        _stereo16StreamGenerator.Reset(sample);
         CancellationTokenSource cts = new();
         Task streamData = StreamData(cts.Token);
         return new ActiveSession(streamData, cts);
@@ -90,11 +125,22 @@ public sealed class PCtx : IDisposable
         {
             while (true)
             {
-                short[] dataTmp = ArrayPool<short>.Shared.Rent(BufferSizeInSamples * 2);
-                try
+                cancellationToken.ThrowIfCancellationRequested();
+                int samplesFilled = 0;
+                while (samplesFilled < BufferSizeInSamples)
                 {
+                    int elementCount = (BufferSizeInSamples - samplesFilled) * 2;
+                    short[] dataTmp = ArrayPool<short>.Shared.Rent(elementCount);
                     if (_debug != null) await _debug.WriteAsync("Waiting for buffer... ");
-                    int samples = await _stereo16StreamGenerator.FillBufferAsync(dataTmp, cancellationToken);
+                    int samples;
+                    try
+                    {
+                        samples = await _stereo16StreamGenerator.FillBufferAsync(dataTmp.AsMemory(0, elementCount), cancellationToken);
+                    }
+                    finally
+                    {
+                        ArrayPool<short>.Shared.Return(dataTmp);
+                    }
                     if (_debug != null) await _debug.WriteLineAsync($"{samples} samples");
                     if (samples <= 0) break;
                     Memory<short> data = dataTmp.AsMemory(0, samples * 2);
@@ -102,52 +148,89 @@ public sealed class PCtx : IDisposable
                     Ce();
                     AL.BufferData(buf, ALFormat.Stereo16, data.Span, _sampleRate);
                     Ce();
-                    AL.SourceQueueBuffer(_source, buf);
-                    Ce();
-                    if (preBufferLeft > 0)
+                    _are.WaitOne();
+                    try
                     {
-                        preBufferLeft -= samples / (double)_sampleRate;
-                        if (preBufferLeft <= 0)
-                        {
-                            AL.SourcePlay(_source);
-                            Ce();
-                        }
+                        AL.SourceQueueBuffer(_source, buf);
+                        Ce();
+                        _sameDesu = true;
                     }
-                    else
+                    finally
                     {
-                        // Wait for at least one buffer to finish processing
-                        while (true)
-                        {
-                            AL.GetSource(_source, ALGetSourcei.BuffersProcessed, out int processed);
-                            if (processed <= 0) await Task.Delay(10, cancellationToken);
-                            else
-                            {
-                                while (processed-- > 0)
-                                {
-                                    int bb = AL.SourceUnqueueBuffer(_source);
-                                    Ce();
-                                    AL.DeleteBuffer(bb);
-                                    Ce();
-                                }
-                                break;
-                            }
-                        }
+                        _are.Set();
+                    }
+                    samplesFilled += samples;
+                    _sampleSizes[buf] = samples;
+                }
+                if (samplesFilled <= 0) break;
+                if (preBufferLeft > 0)
+                {
+                    preBufferLeft -= samplesFilled / (double)_sampleRate;
+                    if (preBufferLeft <= 0)
+                    {
+                        AL.SourcePlay(_source);
+                        Ce();
                     }
                 }
-                finally
+                else
                 {
-                    ArrayPool<short>.Shared.Return(dataTmp);
+                    // Wait for at least one buffer to finish processing
+                    await WaitForBuffersAsync(cancellationToken);
                 }
             }
             // Wait for all buffers to finish processing
+            _are.WaitOne();
+            try
+            {
+                while (true)
+                {
+                    AL.GetSource(_source, ALGetSourcei.BuffersQueued, out int queued);
+                    Ce();
+                    AL.GetSource(_source, ALGetSourcei.BuffersProcessed, out int processed);
+                    Ce();
+                    if (queued == 0 && processed == 0) break;
+                    if (processed <= 0) await Task.Delay(10, cancellationToken);
+                    else
+                    {
+                        while (processed-- > 0)
+                        {
+                            int bb = AL.SourceUnqueueBuffer(_source);
+                            Ce();
+                            _processedSamples += _sampleSizes[bb];
+                            AL.DeleteBuffer(bb);
+                            Ce();
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                _are.Set();
+            }
+            _sampleInBuffer = 0;
+            AL.SourceStop(_source);
+        }
+        catch (TaskCanceledException)
+        {
+            AL.GetSource(_source, ALGetSourcei.SampleOffset, out int sample);
+            Ce();
+            _sampleInBuffer = sample;
+            AL.SourceStop(_source);
+            throw;
+        }
+    }
+
+    private async Task WaitForBuffersAsync(CancellationToken cancellationToken = default)
+    {
+        _are.WaitOne();
+        try
+        {
+            if (_sameDesu) _sameDesu = false;
+            else return;
             while (true)
             {
-                AL.GetSource(_source, ALGetSourcei.BuffersQueued, out int queued);
-                Ce();
                 AL.GetSource(_source, ALGetSourcei.BuffersProcessed, out int processed);
-                if (_debug != null) await _debug.WriteLineAsync($"waiting... {queued} {processed}");
                 Ce();
-                if (queued == 0 && processed == 0) break;
                 if (processed <= 0) await Task.Delay(10, cancellationToken);
                 else
                 {
@@ -155,16 +238,17 @@ public sealed class PCtx : IDisposable
                     {
                         int bb = AL.SourceUnqueueBuffer(_source);
                         Ce();
+                        _processedSamples += _sampleSizes[bb];
                         AL.DeleteBuffer(bb);
                         Ce();
                     }
+                    break;
                 }
             }
-            AL.SourceStop(_source);
         }
-        catch (TaskCanceledException)
+        finally
         {
-            AL.SourceStop(_source);
+            _are.Set();
         }
     }
 
@@ -179,7 +263,7 @@ public sealed class PCtx : IDisposable
         {
             if (_activeSession.Task.IsCompleted)
             {
-                _activeSession = null;
+                DestroyCurrentTask();
                 return Task.CompletedTask;
             }
             return _activeSession.Task;
@@ -232,6 +316,7 @@ public sealed class PCtx : IDisposable
     public void Dispose()
     {
         ReleaseUnmanagedResources();
+        _are.Dispose();
         GC.SuppressFinalize(this);
     }
 

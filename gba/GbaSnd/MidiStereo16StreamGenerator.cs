@@ -8,8 +8,12 @@ public class MidiStereo16StreamGenerator : Stereo16StreamGenerator
     private readonly MidiFile _midi;
     private readonly int _numSamples;
     private int _sample;
+    private List<CacheBuffer> _cache;
+
+    private readonly record struct CacheBuffer(Range Range, Memory<short> SampleBuffer);
 
     public override int Frequency { get; }
+    public override int Length { get; }
 
     public MidiStereo16StreamGenerator(MidiFileSequencer sequencer, MidiFile midi, int sampleRate, double duration)
     {
@@ -17,12 +21,18 @@ public class MidiStereo16StreamGenerator : Stereo16StreamGenerator
         _midi = midi;
         Frequency = sampleRate;
         _numSamples = (int)(sampleRate * duration);
+        Length = _numSamples;
         _sample = 0;
+        _cache = new List<CacheBuffer>();
+        _sequencer.Play(_midi, false);
     }
 
-    public override void Reset()
+    public override void Reset(int sample)
     {
+        // Method should only ever execute when no buffer tasks are running
+        if (_sample == sample) return;
         _sequencer.Play(_midi, false);
+        // TODO position sample
         _sample = 0;
     }
 
