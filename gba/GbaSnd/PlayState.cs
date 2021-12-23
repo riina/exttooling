@@ -5,5 +5,6 @@ public enum PlayState
     Initial,
     Playing,
     Paused,
-    Stopped
+    Stopped,
+    Ended
 }

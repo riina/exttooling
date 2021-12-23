@@ -120,7 +120,7 @@ public class MidiStereo16StreamGenerator : Stereo16StreamGenerator
             return false;
         }
         b = _cache.Values[l - 1];
-        if (b.Range.End.Value >= index)
+        if (b.Range.End.Value <= index)
         {
             samples = 0;
             buffer = default;

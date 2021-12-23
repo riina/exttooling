@@ -13,6 +13,7 @@ public sealed class PCtx : IDisposable
         get
         {
             EnsureState();
+            if (_ended) return PlayState.Ended;
             if (GetPlayTaskResetIfComplete().IsCompleted) return PlayState.Stopped;
             var state = AL.GetSourceState(_source) switch
             {
@@ -58,6 +59,7 @@ public sealed class PCtx : IDisposable
     private int _baseSample;
     private int _source;
     private ActiveSession? _activeSession;
+    private bool _ended;
 
     private record ActiveSession(Task Task, CancellationTokenSource Cts)
     {
@@ -76,11 +78,28 @@ public sealed class PCtx : IDisposable
         _debug = debug;
     }
 
-    public async Task StartAsync(double time = 0, CancellationToken cancellationToken = default)
+    public Task PlayAsync(double time = 0, CancellationToken cancellationToken = default)
     {
+        return PlayInternal(GetSampleFromTime(time), cancellationToken);
+    }
+
+    public Task ResumeAsync(CancellationToken cancellationToken = default)
+    {
+        return PlayInternal(Sample, cancellationToken);
+    }
+
+    private async Task PlayInternal(int sample, CancellationToken cancellationToken = default)
+    {
+        sample = ClampSample(sample);
         EnsureState();
         DestroyCurrentTask();
-        _activeSession = StartStreamData(GetSampleFromTime(time));
+        if (sample + 1 >= Length)
+        {
+            _ended = true;
+            return;
+        }
+        _activeSession = StartStreamData(ClampSample(sample));
+        _ended = false;
         while (true)
         {
             PlayState ps = PlayState;
@@ -97,10 +116,19 @@ public sealed class PCtx : IDisposable
         }
     }
 
-    public Task StartSeekAsync(double deltaTime = 0, CancellationToken cancellationToken = default)
+    public Task PlaySeekAsync(double deltaTime = 0, CancellationToken cancellationToken = default)
     {
-        return StartAsync(Time + deltaTime, cancellationToken);
+        return PlayAsync(Time + deltaTime, cancellationToken);
     }
+
+
+    public void Stop()
+    {
+        EnsureState();
+        DestroyCurrentTask();
+    }
+
+    private int ClampSample(int sample) => Math.Clamp(sample, 0, Length);
 
     private int GetSampleFromTime(double time) => (int)(time * _sampleRate);
 
@@ -218,6 +246,7 @@ public sealed class PCtx : IDisposable
                 _are.Set();
             }
             _sampleInBuffer = 0;
+            _ended = true;
             AL.SourceStop(_source);
         }
         catch (TaskCanceledException)
@@ -312,6 +341,7 @@ public sealed class PCtx : IDisposable
             // ignored
         }
         _activeSession = null;
+        _sameDesu = false;
         SwapSource();
     }
 
