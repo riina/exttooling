@@ -11,7 +11,9 @@ public sealed class MPlayerContext : IDisposable
     {
         _dev = ALC.OpenDevice(null);
         _context = ALC.CreateContext(_dev, new ALContextAttributes());
+#pragma warning disable CS8073
         if (_dev == null) throw new InvalidOperationException(AL.GetErrorString(AL.GetError()));
+#pragma warning restore CS8073
         try
         {
             if (!ALC.IsEnumerationExtensionPresent(_dev)) throw new NotSupportedException();
