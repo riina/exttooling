@@ -33,9 +33,10 @@ public class GbaSongLoader
         {
             try
             {
-                int trackCount = _mr.GetTrackCount(song);
+                SongRipper sr = _mr.GetSongRipper(song, true);
+                int trackCount = sr.TrackCount;
                 if (trackCount < trackThreshold) continue;
-                songs.Add(new GbaSong(this, song, gameCode, i++, maker));
+                songs.Add(new GbaSong(this, song, gameCode, i++, maker, sr.CalculateDuration()));
             }
             catch
             {

@@ -18,10 +18,7 @@ await AR.Require("gba").Optional("id").DoAsync(async l =>
     await using (FileStream fs = File.OpenRead(gba)) gsl = new GbaSongLoader(fs);
     if (!indices.Any())
     {
-        foreach (var s in gsl.Songs)
-        {
-            Console.WriteLine(s.Name);
-        }
+        foreach (var s in gsl.Songs) Console.WriteLine($"{s.Artist} - {s.Name}{(s.Duration is { } d ? $" ({d:mm\\:ss})" : "")}");
         return;
     }
     List<GbaSong> songs = new();
