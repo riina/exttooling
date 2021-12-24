@@ -1,6 +1,6 @@
 using MeltySynth;
 
-namespace GbaSnd;
+namespace Playful.Gba;
 
 public class MidiPcm16X2Generator : Pcm16X2Generator
 {

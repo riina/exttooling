@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace GbaSnd;
+namespace Playful;
 
 internal class TaggedPlaylist : IList<MSong>
 {

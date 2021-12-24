@@ -1,4 +1,4 @@
-namespace GbaSnd;
+namespace Playful;
 
 public abstract class Pcm16X2Generator : SoundGenerator<short>
 {

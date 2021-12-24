@@ -2,9 +2,9 @@ using Fp;
 using GbaMus;
 using MeltySynth;
 
-namespace GbaSnd;
+namespace Playful.Gba;
 
-public class GbaSongLoader
+public class GbaSongSource
 {
     private static readonly Dictionary<string, string> _codeMap = new() { { "01", "Nintendo" }, { "08", "Capcom" } };
     public static readonly IReadOnlyDictionary<string, string> CodeMap = _codeMap;
@@ -14,7 +14,7 @@ public class GbaSongLoader
     private readonly MemoryRipper _mr;
     private readonly MidiFileSequencer _sequencer;
 
-    public GbaSongLoader(Stream stream, GbaMusRipper.Settings? settings = null, int trackThreshold = 3)
+    public GbaSongSource(Stream stream, GbaMusRipper.Settings? settings = null, int trackThreshold = 3)
     {
         MemoryStream ms = new();
         stream.CopyTo(ms);

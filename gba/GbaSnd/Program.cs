@@ -1,4 +1,5 @@
-﻿using GbaSnd;
+﻿using Playful;
+using Playful.Gba;
 
 await AR.Require("gba").Optional("id").DoAsync(async l =>
 {
@@ -14,8 +15,8 @@ await AR.Require("gba").Optional("id").DoAsync(async l =>
         }
         indices.Add(songIdv);
     }
-    GbaSongLoader gsl;
-    await using (FileStream fs = File.OpenRead(gba)) gsl = new GbaSongLoader(fs);
+    GbaSongSource gsl;
+    await using (FileStream fs = File.OpenRead(gba)) gsl = new GbaSongSource(fs);
     if (!indices.Any())
     {
         foreach (var s in gsl.Songs) Console.WriteLine($"{s.Artist} - {s.Name}{(s.Duration is { } d ? $" ({d:mm\\:ss})" : "")}");

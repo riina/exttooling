@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Text;
 using EA;
 
-namespace GbaSnd;
+namespace Playful;
 
 public sealed class MPlayer : IDisposable, IList<MSong>
 {
@@ -90,7 +90,7 @@ public sealed class MPlayer : IDisposable, IList<MSong>
                             spaceLast = true;
                             setPlaying ^= true;
                             break;
-                        case ConsoleKey.X:
+                        case ConsoleKey.Q:
                             return;
                     }
                     if (vec != 0) break;
@@ -153,7 +153,7 @@ public sealed class MPlayer : IDisposable, IList<MSong>
         if (my < xy.Y)
             WriteProgressBox(left, my++, boxSize, '└', '┘', '─', playing ? '*' : '@', percent);
         if (my < xy.Y)
-            WriteLine(left, my, boxSize, ' ', ' ', ' ', $"</>:jmp n/m:prev/next space:play/pause x:ex");
+            WriteLine(left, my, boxSize, ' ', ' ', ' ', $"</>:jmp n/m:prev/next space:play/pause q:ex");
     }
 
     private static void WriteBox(int left, int top, int boxSize, char l, char r, string text, int scroll, int loopGap)

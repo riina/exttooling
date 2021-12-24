@@ -1,6 +1,6 @@
 using OpenTK.Audio.OpenAL;
 
-namespace GbaSnd;
+namespace Playful;
 
 public sealed class MPlayerContext : IDisposable
 {

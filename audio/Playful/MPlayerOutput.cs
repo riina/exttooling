@@ -1,7 +1,7 @@
 using System.Buffers;
 using OpenTK.Audio.OpenAL;
 
-namespace GbaSnd;
+namespace Playful;
 
 public sealed class MPlayerOutput : IDisposable
 {
