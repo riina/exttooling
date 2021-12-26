@@ -15,15 +15,24 @@ public sealed class MPlayerOutput : IDisposable
             EnsureState();
             if (_ended) return PlayState.Ended;
             if (GetPlayTaskResetIfComplete().IsCompleted) return PlayState.Stopped;
-            var state = AL.GetSourceState(_source) switch
+            var sta = AL.GetSourceState(_source);
+            try
+            {
+                Ce($"{nameof(AL)}.{nameof(AL.GetSourceState)} ({_source})");
+            }
+            catch (InvalidOperationException)
+            {
+                if (AL.GetErrorString(AL.GetError()) == "Invalid Enum") return PlayState.Unknown;
+                throw;
+            }
+            var state = sta switch
             {
                 ALSourceState.Initial => PlayState.Initial,
                 ALSourceState.Playing => PlayState.Playing,
                 ALSourceState.Paused => PlayState.Paused,
                 ALSourceState.Stopped => PlayState.Stopped,
-                _ => throw new ArgumentOutOfRangeException()
+                _ => PlayState.Unknown
             };
-            Ce();
             return state;
         }
     }
@@ -36,9 +45,17 @@ public sealed class MPlayerOutput : IDisposable
         {
             EnsureState();
             if (GetPlayTaskResetIfComplete().IsCompleted) return _baseSample + _processedSamples + _sampleInBuffer;
-            AL.GetSource(_source, ALGetSourcei.SampleOffset, out int sample);
-            Ce();
-            return _baseSample + _processedSamples + (_sampleInBuffer = sample);
+            _areSource.WaitOne();
+            try
+            {
+                AL.GetSource(_source, ALGetSourcei.SampleOffset, out int sample);
+                Ce($"{nameof(AL)}.{nameof(AL.GetSource)} ({_source})");
+                return _baseSample + _processedSamples + (_sampleInBuffer = sample);
+            }
+            finally
+            {
+                _areSource.Set();
+            }
         }
     }
 
@@ -54,9 +71,10 @@ public sealed class MPlayerOutput : IDisposable
     private readonly int _sampleRate;
     private readonly TextWriter? _debug;
     private readonly Dictionary<int, int> _sampleSizes;
-    private readonly AutoResetEvent _are;
+    private readonly AutoResetEvent _areSource;
+    private readonly AutoResetEvent _areBuffer;
     private int _baseSample;
-    private int _source;
+    private volatile int _source;
     private ActiveSession? _activeSession;
     private bool _ended;
 
@@ -71,9 +89,10 @@ public sealed class MPlayerOutput : IDisposable
         _sampleRate = _generator.Frequency;
         Length = _generator.Length;
         _source = AL.GenSource();
-        Ce();
+        Ce($"{nameof(AL)}.{nameof(AL.GenSource)}");
         _sampleSizes = new Dictionary<int, int>();
-        _are = new AutoResetEvent(true);
+        _areSource = new AutoResetEvent(true);
+        _areBuffer = new AutoResetEvent(true);
         _debug = debug;
     }
 
@@ -109,6 +128,7 @@ public sealed class MPlayerOutput : IDisposable
                 case PlayState.Initial:
                 case PlayState.Paused:
                 case PlayState.Stopped:
+                case PlayState.Unknown:
                     await Task.Delay(10, cancellationToken);
                     break;
             }
@@ -119,7 +139,6 @@ public sealed class MPlayerOutput : IDisposable
     {
         return PlayAsync(TimeApprox + deltaTime, cancellationToken);
     }
-
 
     public void Stop()
     {
@@ -190,20 +209,20 @@ public sealed class MPlayerOutput : IDisposable
         if (samples <= 0) return 0;
         Memory<TSample> data = dataTmp.AsMemory(0, samples * numChannels);
         int buf = AL.GenBuffer();
-        Ce();
+        Ce($"{nameof(AL)}.{nameof(AL.GenBuffer)}");
         AL.BufferData(buf, format, data.Span, _sampleRate);
-        Ce();
+        Ce($"{nameof(AL)}.{nameof(AL.BufferData)}");
         cancellationToken.ThrowIfCancellationRequested();
-        _are.WaitOne();
+        _areSource.WaitOne();
         try
         {
             AL.SourceQueueBuffer(_source, buf);
-            Ce();
+            Ce($"{nameof(AL)}.{nameof(AL.SourceQueueBuffer)}");
             _sameDesu = true;
         }
         finally
         {
-            _are.Set();
+            _areSource.Set();
         }
         _sampleSizes[buf] = samples;
         return samples;
@@ -232,7 +251,7 @@ public sealed class MPlayerOutput : IDisposable
                     if (preBufferLeft <= 0)
                     {
                         AL.SourcePlay(_source);
-                        Ce();
+                        Ce($"{nameof(AL)}.{nameof(AL.SourcePlay)}");
                     }
                 }
                 else
@@ -240,22 +259,24 @@ public sealed class MPlayerOutput : IDisposable
                     if (PlayState != PlayState.Playing)
                     {
                         AL.SourceStop(_source);
+                        Ce($"{nameof(AL)}.{nameof(AL.SourceStop)}");
                         AL.SourcePlay(_source);
+                        Ce($"{nameof(AL)}.{nameof(AL.SourcePlay)}");
                     }
                     // Wait for at least one buffer to finish processing
                     await WaitForBuffersAsync(cancellationToken);
                 }
             }
             // Wait for all buffers to finish processing
-            _are.WaitOne();
+            _areBuffer.WaitOne();
             try
             {
                 while (PlayState == PlayState.Playing)
                 {
                     AL.GetSource(_source, ALGetSourcei.BuffersQueued, out int queued);
-                    Ce();
+                    Ce($"{nameof(AL)}.{nameof(AL.GetSource)} ({_source})");
                     AL.GetSource(_source, ALGetSourcei.BuffersProcessed, out int processed);
-                    Ce();
+                    Ce($"{nameof(AL)}.{nameof(AL.GetSource)} ({_source})");
                     if (queued == 0 && processed == 0) break;
                     if (processed <= 0) await Task.Delay(10, cancellationToken);
                     else
@@ -263,35 +284,40 @@ public sealed class MPlayerOutput : IDisposable
                         while (processed-- > 0)
                         {
                             int bb = AL.SourceUnqueueBuffer(_source);
-                            Ce();
+                            Ce($"{nameof(AL)}.{nameof(AL.SourceUnqueueBuffer)}");
                             _processedSamples += _sampleSizes[bb];
                             AL.DeleteBuffer(bb);
-                            Ce();
+                            Ce($"{nameof(AL)}.{nameof(AL.DeleteBuffer)}");
                         }
                     }
                 }
             }
             finally
             {
-                _are.Set();
+                _areBuffer.Set();
             }
             _sampleInBuffer = 0;
             _ended = true;
             AL.SourceStop(_source);
+            Ce($"{nameof(AL)}.{nameof(AL.SourceStop)}");
         }
         catch (TaskCanceledException)
         {
-            AL.GetSource(_source, ALGetSourcei.SampleOffset, out int sample);
-            Ce();
-            _sampleInBuffer = sample;
-            AL.SourceStop(_source);
+            if (AL.IsSource(_source))
+            {
+                AL.GetSource(_source, ALGetSourcei.SampleOffset, out int sample);
+                Ce($"{nameof(AL)}.{nameof(AL.GetSource)} ({_source})");
+                _sampleInBuffer = sample;
+                AL.SourceStop(_source);
+                Ce($"{nameof(AL)}.{nameof(AL.SourceStop)}");
+            }
             throw;
         }
     }
 
     private async Task WaitForBuffersAsync(CancellationToken cancellationToken = default)
     {
-        _are.WaitOne();
+        _areBuffer.WaitOne();
         try
         {
             if (_sameDesu) _sameDesu = false;
@@ -300,17 +326,17 @@ public sealed class MPlayerOutput : IDisposable
             while (runs-- > 0)
             {
                 AL.GetSource(_source, ALGetSourcei.BuffersProcessed, out int processed);
-                Ce();
+                Ce($"{nameof(AL)}.{nameof(AL.GetSource)} ({_source})");
                 if (processed <= 0) await Task.Delay(10, cancellationToken);
                 else
                 {
                     while (processed-- > 0)
                     {
                         int bb = AL.SourceUnqueueBuffer(_source);
-                        Ce();
+                        Ce($"{nameof(AL)}.{nameof(AL.SourceUnqueueBuffer)}");
                         _processedSamples += _sampleSizes[bb];
                         AL.DeleteBuffer(bb);
-                        Ce();
+                        Ce($"{nameof(AL)}.{nameof(AL.DeleteBuffer)}");
                     }
                     break;
                 }
@@ -318,7 +344,7 @@ public sealed class MPlayerOutput : IDisposable
         }
         finally
         {
-            _are.Set();
+            _areBuffer.Set();
         }
     }
 
@@ -343,23 +369,34 @@ public sealed class MPlayerOutput : IDisposable
 
     private void SwapSource()
     {
-        if (_source != 0) AL.DeleteSource(_source);
-        _source = 0;
-        Ce();
-        _source = AL.GenSource();
-        Ce();
+        int source;
+        _areSource.WaitOne();
+        try
+        {
+            if ((source = Interlocked.Exchange(ref _source, 0)) != 0)
+            {
+                AL.DeleteSource(source);
+                Ce($"{nameof(AL)}.{nameof(AL.DeleteSource)} ({source})");
+            }
+            _source = AL.GenSource();
+            Ce($"{nameof(AL)}.{nameof(AL.GenSource)}");
+        }
+        finally
+        {
+            _areSource.Set();
+        }
     }
 
-    private void Ce()
+    private void Ce(string op)
     {
         ALError error = AL.GetError();
         if (error == ALError.NoError) return;
         string e = AL.GetErrorString(error);
-        DestroyCurrentTask();
-        throw new InvalidOperationException(e);
+        string err = $"{op}: {e}";
+        throw new InvalidOperationException(err);
     }
 
-    private void DestroyCurrentTask()
+    private void DestroyCurrentTask(bool destroyDestroy = false)
     {
         if (_activeSession == null) return;
         _activeSession.Stop();
@@ -373,21 +410,25 @@ public sealed class MPlayerOutput : IDisposable
         }
         _activeSession = null;
         _sameDesu = false;
-        SwapSource();
+        if (!destroyDestroy) SwapSource();
     }
 
     private void ReleaseUnmanagedResources()
     {
-        DestroyCurrentTask();
-        if (_source != 0) AL.DeleteSource(_source);
-        _source = 0;
-        Ce();
+        DestroyCurrentTask(true);
+        int source;
+        if ((source = Interlocked.Exchange(ref _source, 0)) != 0)
+        {
+            AL.DeleteSource(source);
+            Ce($"{nameof(AL)}.{nameof(AL.DeleteSource)} ({source})");
+        }
     }
 
     public void Dispose()
     {
         ReleaseUnmanagedResources();
-        _are.Dispose();
+        _areSource.Dispose();
+        _areBuffer.Dispose();
         GC.SuppressFinalize(this);
     }
 

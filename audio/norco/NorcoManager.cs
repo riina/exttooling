@@ -9,6 +9,8 @@ namespace norco;
 
 public sealed class NorcoManager : IDisposable
 {
+    private const string Header = "</>:jmp n/m:prev/next space:play/pause q:ex";
+
     static NorcoManager()
     {
         s_loaders = new Dictionary<string, SongLoader>();
@@ -100,7 +102,82 @@ public sealed class NorcoManager : IDisposable
                             using MPlayer mp = new();
                             foreach (MSong song in songs)
                                 mp.Add(song);
-                            await mp.ExecuteAsync();
+                            CancellationTokenSource mpts = new();
+                            Task t = mp.StartExecuteAsync(mpts.Token);
+                            MPlayerDisplay display = new();
+                            Task dt = Task.Run(async () =>
+                            {
+                                using MPlayerDisplay mpd = display;
+                                await mpd.ExecuteAsync(mpts.Token);
+                            }, mpts.Token);
+                            bool playing = true;
+                            while (true)
+                            {
+                                if (mp.Ended || !mp.Active) break;
+                                if (dt.IsFaulted) throw dt.Exception!;
+                                if (t.IsFaulted) throw t.Exception!;
+                                bool setPlaying = playing;
+                                if (mp.TryGetDisplayState(out MPlayerDisplayState displayState))
+                                    display.SetDisplayState(displayState with { Message = Header });
+                                await Task.Delay(10, default);
+                                int transport = 0;
+                                bool spaceLast = false;
+                                int vec = 0;
+                                while (Console.KeyAvailable)
+                                {
+                                    ConsoleKeyInfo cki2 = Console.ReadKey(true);
+                                    switch (cki2.Key)
+                                    {
+                                        case ConsoleKey.N:
+                                            vec = -1;
+                                            break;
+                                        case ConsoleKey.M:
+                                            vec = 1;
+                                            break;
+                                        case ConsoleKey.LeftArrow:
+                                            spaceLast = false;
+                                            transport -= 5;
+                                            break;
+                                        case ConsoleKey.RightArrow:
+                                            spaceLast = false;
+                                            transport += 5;
+                                            break;
+                                        case ConsoleKey.Spacebar:
+                                            spaceLast = true;
+                                            setPlaying ^= true;
+                                            break;
+                                        case ConsoleKey.Q:
+                                            goto quitPlayer;
+                                    }
+                                    if (vec != 0) break;
+                                }
+                                if (vec != 0) mp.SeekTrack(vec);
+                                if (transport != 0) await mp.PlaySeekAsync(transport, default);
+                                if (setPlaying != playing && spaceLast)
+                                {
+                                    if (setPlaying) await mp.PlaySeekAsync(transport, default);
+                                    else mp.Stop();
+                                }
+                                playing = setPlaying;
+                            }
+                            quitPlayer:
+                            mpts.Cancel();
+                            try
+                            {
+                                await t;
+                            }
+                            catch
+                            {
+                                // ignored
+                            }
+                            try
+                            {
+                                await dt;
+                            }
+                            catch
+                            {
+                                // ignored
+                            }
                             break;
                         }
                 }
