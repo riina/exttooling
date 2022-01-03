@@ -35,5 +35,5 @@ await AR.Require("gba").Optional("id").DoAsync(async l =>
     using MPlayer mp = new();
     foreach (GbaSong song in songs)
         mp.Add(song);
-    await mp.ExecuteAsync();
+    await mp.StartExecuteAsync();
 });

@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playful", "..\audio\Playful
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "norco", "..\audio\norco\norco.csproj", "{50BEBC5F-4F92-4956-9B76-C52FB736F92A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "norcoremote", "..\audio\norcoremote\norcoremote.csproj", "{6EF501C4-A209-4B02-8170-FAC6813CC6AF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,5 +56,9 @@ Global
 		{50BEBC5F-4F92-4956-9B76-C52FB736F92A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{50BEBC5F-4F92-4956-9B76-C52FB736F92A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{50BEBC5F-4F92-4956-9B76-C52FB736F92A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6EF501C4-A209-4B02-8170-FAC6813CC6AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6EF501C4-A209-4B02-8170-FAC6813CC6AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6EF501C4-A209-4B02-8170-FAC6813CC6AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6EF501C4-A209-4B02-8170-FAC6813CC6AF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

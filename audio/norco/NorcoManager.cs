@@ -1,4 +1,6 @@
 using System.Drawing;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -9,6 +11,7 @@ namespace norco;
 
 public sealed class NorcoManager : IDisposable
 {
+    private readonly NorcoOptions _options;
     private const string Header = "</>:jmp n/m:prev/next space:play/pause q:ex";
 
     static NorcoManager()
@@ -51,11 +54,19 @@ public sealed class NorcoManager : IDisposable
     private Guid _currentPlaylistGuid;
     private Playlist _currentPlaylist;
     private Point _xy;
+    private TcpListener? _tcp;
 
-    public NorcoManager()
+    public NorcoManager(NorcoOptions options)
     {
+        _options = options;
         _playlistManager = new PlaylistManager(PlaylistManagerOnUpdatedPlaylist, PlaylistManagerChanged);
         _currentPlaylist = new Playlist("", Array.Empty<JsonElement>());
+        if (_options.ListenPort is { } listenPort)
+        {
+            _tcp = new TcpListener(new IPEndPoint(IPAddress.Loopback, listenPort));
+            // TODO handle incoming connections with DisplayStateWriter
+            _tcp?.Start();
+        }
     }
 
     public async Task ExecuteAsync()
@@ -281,5 +292,9 @@ public sealed class NorcoManager : IDisposable
         Interlocked.Increment(ref _pendingChanges);
     }
 
-    public void Dispose() => _playlistManager.Dispose();
+    public void Dispose()
+    {
+        _playlistManager.Dispose();
+        _tcp?.Stop();
+    }
 }
