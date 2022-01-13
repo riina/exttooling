@@ -3,10 +3,11 @@ using GbaMus;
 using MeltySynth;
 
 const int sampleRate = 22050;
-
-AR.Require("gba-or-dir").Require("out-dir").KeyDo((r, _) =>
+var synthesizerSettings = new SynthesizerSettings(sampleRate);
+AR.Require("gba-or-dir").Require("out-dir").Optional("echo-on").KeyDo((r, o) =>
 {
     string input = Path.GetFullPath(r["gba-or-dir"]), outDir = Path.GetFullPath(r["out-dir"]);
+    synthesizerSettings.EnableReverbAndChorus = new HashSet<string>{"echo-on","true","y","e","yes"}.Contains(o["echo-on"]?.ToLowerInvariant()??"");
     if (File.Exists(outDir)) AR.Exit($"{outDir}: is a file", 2);
     AR.Exit(() => Directory.CreateDirectory(outDir), $"{outDir}: failed to create output directory", 3);
     if (File.Exists(input))
@@ -16,7 +17,7 @@ AR.Require("gba-or-dir").Require("out-dir").KeyDo((r, _) =>
         MemoryStream soundfontStream = new();
         mr.WriteSoundFont(soundfontStream);
         soundfontStream.Position = 0;
-        var synthesizer = new Synthesizer(new SoundFont(soundfontStream), sampleRate);
+        var synthesizer = new Synthesizer(new SoundFont(soundfontStream), synthesizerSettings);
         foreach (int song in mr.Songs)
         {
             MemoryStream songStream = new();
@@ -45,7 +46,7 @@ AR.Require("gba-or-dir").Require("out-dir").KeyDo((r, _) =>
         string soundfont = soundfonts.First();
         var midis = files.Where(v => Path.GetExtension(v.ToLowerInvariant()) == ".mid").ToList();
         if (!midis.Any()) return;
-        var synthesizer = new Synthesizer(soundfont, sampleRate);
+        var synthesizer = new Synthesizer(soundfont, synthesizerSettings);
         foreach (string midi in midis)
         {
             MidiFile midiFile;
