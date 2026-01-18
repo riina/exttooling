@@ -1,14 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Ask" Version="1.2.0" />
-    <PackageReference Include="Fp.Plus" Version="0.22.2" />
+    <PackageReference Include="Fp.Plus" Version="0.27.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.13" /> <!-- TODO Fp.Plus dependency vulnerability -->
     <!--<PackageReference Include="GbaMus" Version="0.1.0" />-->
   </ItemGroup>
 

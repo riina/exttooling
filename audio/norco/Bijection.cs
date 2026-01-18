@@ -9,6 +9,7 @@ Changes:
  */
 
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 
 namespace norco;
 
@@ -23,7 +24,7 @@ namespace norco;
 /// If <typeparamref name="TA"/> and <typeparamref name="TB"/> are the same type, the same value can occur
 /// once in both the set of first elements and once in the set of second elements.
 /// </remarks>
-public class Bijection<TA, TB> : ICollection<KeyValuePair<TA, TB>>, IReadOnlyCollection<KeyValuePair<TA, TB>>
+public class Bijection<TA, TB>: ICollection<KeyValuePair<TA, TB>>, IReadOnlyCollection<KeyValuePair<TA, TB>> where TA : notnull where TB : notnull
 {
     #region Fields / properties
 
@@ -82,7 +83,7 @@ public class Bijection<TA, TB> : ICollection<KeyValuePair<TA, TB>>, IReadOnlyCol
     /// <param name="a">First element.</param>
     /// <param name="b">Second element.</param>
     /// <returns>True if found.</returns>
-    public bool TryGetB(TA a, out TB b)
+    public bool TryGetB(TA a, [NotNullWhen(true)] out TB? b)
     {
         return _aToB.TryGetValue(a, out b);
     }
@@ -93,7 +94,7 @@ public class Bijection<TA, TB> : ICollection<KeyValuePair<TA, TB>>, IReadOnlyCol
     /// <param name="a">First element.</param>
     /// <param name="b">Second element.</param>
     /// <returns>True if found.</returns>
-    public bool TryGetA(TB b, out TA a)
+    public bool TryGetA(TB b, [NotNullWhen(true)] out TA? a)
     {
         return _bToA.TryGetValue(b, out a);
     }
@@ -119,7 +120,7 @@ public class Bijection<TA, TB> : ICollection<KeyValuePair<TA, TB>>, IReadOnlyCol
     /// <returns>True if the pair existed and was removed.</returns>
     public bool RemoveA(TA a)
     {
-        if (!_aToB.TryGetValue(a, out TB b)) return false;
+        if (!_aToB.TryGetValue(a, out TB? b)) return false;
         RemoveInternal(a, b);
         return true;
     }
@@ -131,7 +132,7 @@ public class Bijection<TA, TB> : ICollection<KeyValuePair<TA, TB>>, IReadOnlyCol
     /// <returns>True if the pair existed and was removed.</returns>
     public bool RemoveB(TB b)
     {
-        if (!_bToA.TryGetValue(b, out TA a)) return false;
+        if (!_bToA.TryGetValue(b, out TA? a)) return false;
         RemoveInternal(a, b);
         return true;
     }
@@ -153,7 +154,7 @@ public class Bijection<TA, TB> : ICollection<KeyValuePair<TA, TB>>, IReadOnlyCol
     /// <inheritdoc />
     public bool Contains(KeyValuePair<TA, TB> item)
     {
-        return _aToB.TryGetValue(item.Key, out TB b) && Equals(b, item);
+        return _aToB.TryGetValue(item.Key, out TB? b) && Equals(b, item);
     }
 
     /// <inheritdoc />
@@ -174,7 +175,7 @@ public class Bijection<TA, TB> : ICollection<KeyValuePair<TA, TB>>, IReadOnlyCol
     /// <inheritdoc />
     public bool Remove(KeyValuePair<TA, TB> item)
     {
-        if (!_aToB.TryGetValue(item.Key, out TB b) || !Equals(b, item.Value)) return false;
+        if (!_aToB.TryGetValue(item.Key, out TB? b) || !Equals(b, item.Value)) return false;
         _aToB.Remove(item.Key);
         _bToA.Remove(b);
         return true;

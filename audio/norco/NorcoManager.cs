@@ -69,11 +69,79 @@ public sealed class NorcoManager : IDisposable
         }
     }
 
+    private enum ControlKey
+    {
+        Q,
+        UpArrow,
+        DownArrow,
+        Enter,
+        N,
+        M,
+        LeftArrow,
+        RightArrow,
+        Spacebar
+
+    }
+
+    private interface IControlBackend
+    {
+        ControlKey? GetNextInput();
+    }
+
+    private class BasicControlBackend : IControlBackend
+    {
+        public ControlKey? GetNextInput()
+        {
+            if (Console.KeyAvailable)
+            {
+                return Console.ReadKey(true).Key switch
+                {
+                    ConsoleKey.Q => ControlKey.Q,
+                    ConsoleKey.UpArrow => ControlKey.UpArrow,
+                    ConsoleKey.DownArrow => ControlKey.DownArrow,
+                    ConsoleKey.Enter => ControlKey.Enter,
+                    ConsoleKey.N => ControlKey.N,
+                    ConsoleKey.M => ControlKey.M,
+                    ConsoleKey.LeftArrow => ControlKey.LeftArrow,
+                    ConsoleKey.RightArrow => ControlKey.RightArrow,
+                    ConsoleKey.Spacebar => ControlKey.Spacebar,
+                    _ => null
+                };
+            }
+            return null;
+        }
+    }
+
+    private class AltControlBackend : IControlBackend
+    {
+        public ControlKey? GetNextInput()
+        {
+            if (Console.In.Peek() >= 0)
+            {
+                return char.ToLowerInvariant((char)Console.Read()) switch
+                {
+                    'q' => ControlKey.Q,
+                    'w' => ControlKey.UpArrow,
+                    's' => ControlKey.DownArrow,
+                    ';' => ControlKey.Enter,
+                    'n' => ControlKey.N,
+                    'm' => ControlKey.M,
+                    'a' => ControlKey.LeftArrow,
+                    'd' => ControlKey.RightArrow,
+                    'p' => ControlKey.Spacebar,
+                    _ => null
+                };
+            }
+            return null;
+        }
+    }
+
     public async Task ExecuteAsync()
     {
         Console.CursorVisible = false;
         UpdatePlaylistSelector();
         DrawPlaylistScreen();
+        IControlBackend controlBackend = Console.IsInputRedirected ? new AltControlBackend() : new BasicControlBackend();
         while (true)
         {
             Point xy = new(Console.WindowWidth, Console.WindowHeight);
@@ -83,26 +151,25 @@ public sealed class NorcoManager : IDisposable
                 DrawPlaylistScreen();
                 _xy = xy;
             }
-            else if (Console.KeyAvailable)
+            else if (controlBackend.GetNextInput() is { } mainControlKey)
             {
-                ConsoleKeyInfo cki = Console.ReadKey(true);
-                switch (cki.Key)
+                switch (mainControlKey)
                 {
-                    case ConsoleKey.Q:
+                    case ControlKey.Q:
                         return;
-                    case ConsoleKey.UpArrow:
+                    case ControlKey.UpArrow:
                         {
                             Guid guid = _playlistManager.NameMapping.Select(v => v.Value.Id).TakeWhile(v => v != _playlistSelector).LastOrDefault();
                             _playlistSelector = guid != default ? guid : _playlistManager.NameMapping.Select(v => v.Value.Id).FirstOrDefault();
                             break;
                         }
-                    case ConsoleKey.DownArrow:
+                    case ControlKey.DownArrow:
                         {
                             Guid guid = _playlistManager.NameMapping.Select(v => v.Value.Id).SkipWhile(v => v != _playlistSelector).Skip(1).FirstOrDefault();
                             _playlistSelector = guid != default ? guid : _playlistManager.NameMapping.Select(v => v.Value.Id).LastOrDefault();
                             break;
                         }
-                    case ConsoleKey.Enter:
+                    case ControlKey.Enter:
                         {
                             if (!_playlistManager.TryLoadPlaylist(_playlistSelector, out Playlist? playlist)) break;
                             _currentPlaylistGuid = _playlistSelector;
@@ -134,30 +201,29 @@ public sealed class NorcoManager : IDisposable
                                 int transport = 0;
                                 bool spaceLast = false;
                                 int vec = 0;
-                                while (Console.KeyAvailable)
+                                while (controlBackend.GetNextInput() is { } subControlKey)
                                 {
-                                    ConsoleKeyInfo cki2 = Console.ReadKey(true);
-                                    switch (cki2.Key)
+                                    switch (subControlKey)
                                     {
-                                        case ConsoleKey.N:
+                                        case ControlKey.N:
                                             vec = -1;
                                             break;
-                                        case ConsoleKey.M:
+                                        case ControlKey.M:
                                             vec = 1;
                                             break;
-                                        case ConsoleKey.LeftArrow:
+                                        case ControlKey.LeftArrow:
                                             spaceLast = false;
                                             transport -= 5;
                                             break;
-                                        case ConsoleKey.RightArrow:
+                                        case ControlKey.RightArrow:
                                             spaceLast = false;
                                             transport += 5;
                                             break;
-                                        case ConsoleKey.Spacebar:
+                                        case ControlKey.Spacebar:
                                             spaceLast = true;
                                             setPlaying ^= true;
                                             break;
-                                        case ConsoleKey.Q:
+                                        case ControlKey.Q:
                                             goto quitPlayer;
                                     }
                                     if (vec != 0) break;

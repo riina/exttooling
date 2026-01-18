@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Diagnostics;
+using OpenTK.Audio.OpenAL;
 
 namespace Playful;
 
@@ -193,7 +194,10 @@ public sealed class MPlayer : IDisposable, IList<MSong>
 
     public void Dispose()
     {
-        if (!_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
         _disposed = true;
         _mPlayerContext.Dispose();
         _are.WaitOne();

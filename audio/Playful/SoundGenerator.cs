@@ -26,5 +26,6 @@ public abstract class SoundGenerator : IDisposable
 
 public abstract class SoundGenerator<TSample> : SoundGenerator where TSample : unmanaged
 {
+    public abstract int FillBuffer(int samples, Memory<TSample> buffer, CancellationToken cancellationToken = default);
     public abstract ValueTask<int> FillBufferAsync(int samples, Memory<TSample> buffer, CancellationToken cancellationToken = default);
 }
