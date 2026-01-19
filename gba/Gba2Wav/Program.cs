@@ -13,7 +13,7 @@ AR.Require("gba-or-dir").Require("out-dir").Optional("echo-on").KeyDo((r, o) =>
     if (File.Exists(input))
     {
         MemoryRipper mr;
-        using (FileStream ms = File.OpenRead(input)) mr = new MemoryRipper(ms, new GbaMusRipper.Settings());
+        using (FileStream ms = File.OpenRead(input)) mr = new MemoryRipper(ms, new GbaMusRipper.Settings(ImproveSoundfontCompliance: true));
         MemoryStream soundfontStream = new();
         mr.WriteSoundFont(soundfontStream);
         soundfontStream.Position = 0;

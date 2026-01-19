@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using GbaMus;
 
 namespace Playful.Gba;
 
@@ -17,7 +18,7 @@ public class GbaSongLoader : SongLoader
                     songIds.Add(songId);
         try
         {
-            GbaSongSource source = new(stream);
+            GbaSongSource source = new(stream, new GbaMusRipper.Settings(ImproveSoundfontCompliance: true));
             songs = songIds.Any() ? source.Songs.Where(s => songIds.Contains(s.SongId)).OfType<MSong>().ToList() : new List<MSong>(source.Songs);
             return true;
         }
