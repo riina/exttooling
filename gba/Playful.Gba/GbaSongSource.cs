@@ -10,7 +10,7 @@ public class GbaSongSource
     public static readonly IReadOnlyDictionary<string, string> CodeMap = _codeMap;
     public readonly IReadOnlyList<GbaSong> Songs;
 
-    private const int SampleRate = 22050;
+    private const int SampleRate = 48000;//22050;
     private readonly MemoryRipper _mr;
     private readonly MidiFileSequencer _sequencer;
 
@@ -25,7 +25,8 @@ public class GbaSongSource
         MemoryStream soundfontStream = new();
         _mr.WriteSoundFont(soundfontStream);
         soundfontStream.Position = 0;
-        Synthesizer synthesizer = new(new SoundFont(soundfontStream), SampleRate);
+        var synthesizerSettings = new SynthesizerSettings(SampleRate) { EnableReverbAndChorus = false };
+        Synthesizer synthesizer = new(new SoundFont(soundfontStream), synthesizerSettings);
         _sequencer = new MidiFileSequencer(synthesizer);
         List<GbaSong> songs = new();
         int i = 0;
