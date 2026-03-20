@@ -1,0 +1,21 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Package dependenices -->
+    <PackageVersion Include="Ask" Version="1.2.0" />
+    <PackageVersion Include="Azura.Generator" Version="0.9.0" />
+    <PackageVersion Include="CommandLineParser" Version="2.8.0" />
+    <PackageVersion Include="EA" Version="1.1.17100" />
+    <PackageVersion Include="Fp.Plus" Version="0.29.0" />
+    <PackageVersion Include="OpenTK" Version="4.9.4" />
+    <!-- Test dependenices -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
+    <PackageVersion Include="coverlet.collector" Version="8.0.0" />
+    <PackageVersion Include="RichardSzalay.MockHttp" Version="7.0.0" />
+    <PackageVersion Include="System.Linq.Async" Version="7.0.0" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+</Project>

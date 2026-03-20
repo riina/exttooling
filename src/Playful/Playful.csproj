@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageVersion>0.1.1</PackageVersion>
+    <InformationalVersion>$(PackageVersion)</InformationalVersion>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NoWarn>NU5105</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackOnBuild>true</PackOnBuild>
+    <PathMap>$(MSBuildProjectDirectory)=.</PathMap>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <!-- <GenerateDocumentationFile>true</GenerateDocumentationFile> -->
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Authors>riina</Authors>
+    <Owners>riina</Owners>
+    <Description>terminal music interface</Description>
+    <Copyright>Copyright (c) 2021 riina</Copyright>
+    <PackageProjectUrl>https://github.com/riina/exttooling</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/riina/exttooling</RepositoryUrl>
+    <Company>riina</Company>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenTK" />
+    <PackageReference Include="EA" />
+    <PackageReference Include="Azura.Generator" />
+  </ItemGroup>
+
+</Project>

@@ -9,9 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fp.Plus" Version="0.27.0" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.13" /> <!-- TODO Fp.Plus dependency vulnerability -->
-    <PackageReference Include="Ask" Version="1.2.0" />
+    <PackageReference Include="Fp.Plus" />
+    <PackageReference Include="Ask" />
   </ItemGroup>
 
   <ItemGroup>
