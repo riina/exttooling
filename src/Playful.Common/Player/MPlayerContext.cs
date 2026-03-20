@@ -1,6 +1,6 @@
 using OpenTK.Audio.OpenAL;
 
-namespace Playful;
+namespace Playful.Common.Player;
 
 public sealed class MPlayerContext : IDisposable
 {

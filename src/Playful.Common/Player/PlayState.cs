@@ -1,4 +1,4 @@
-namespace Playful;
+namespace Playful.Common.Player;
 
 public enum PlayState
 {

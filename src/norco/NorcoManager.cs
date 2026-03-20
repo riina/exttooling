@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using EA;
 using Playful;
+using Playful.Common.Player;
 
 namespace norco;
 
@@ -193,14 +194,14 @@ public sealed class NorcoManager : IDisposable
                             }
                             _currentPlaylistGuid = _playlistSelector;
                             _currentPlaylist = playlist;
-                            List<MSong> songs = new();
+                            List<PlayableSong> songs = new();
                             foreach (JsonElement x in playlist.Items) songs.AddRange(GetSongs(x));
                             if (!songs.Any())
                             {
                                 break;
                             }
                             using MPlayer mp = new();
-                            foreach (MSong song in songs)
+                            foreach (PlayableSong song in songs)
                                 mp.Add(song);
                             CancellationTokenSource mpts = new();
                             Task t = mp.StartExecuteAsync(mpts.Token);
@@ -321,23 +322,23 @@ public sealed class NorcoManager : IDisposable
         }
     }
 
-    private IEnumerable<MSong> GetSongs(JsonElement item)
+    private IEnumerable<PlayableSong> GetSongs(JsonElement item)
     {
         if (item.ValueKind == JsonValueKind.String && item.GetString() is { } itemStr)
         {
             Uri uri = new(itemStr);
-            List<MSong> songs = new();
+            List<PlayableSong> songs = new();
             using FileStream fs = File.OpenRead(uri.LocalPath);
             foreach (SongLoader loader in s_loaders.Values)
             {
-                if (loader.TryLoadSongs(fs, uri, out IReadOnlyCollection<MSong>? lSongs) && lSongs.Any())
+                if (loader.TryLoadSongs(fs, uri, out IReadOnlyCollection<PlayableSong>? lSongs) && lSongs.Any())
                 {
                     songs.AddRange(lSongs);
                 }
             }
             return songs;
         }
-        return Array.Empty<MSong>();
+        return Array.Empty<PlayableSong>();
     }
 
     private void UpdatePlaylistSelector()

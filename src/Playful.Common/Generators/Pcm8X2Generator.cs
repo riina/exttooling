@@ -1,4 +1,4 @@
-namespace Playful;
+namespace Playful.Common.Generators;
 
 public abstract class Pcm8X2Generator : SoundGenerator<sbyte>
 {

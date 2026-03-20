@@ -1,4 +1,5 @@
 using MeltySynth;
+using Playful.Common.Generators;
 
 namespace Playful.Gba;
 
@@ -40,11 +41,15 @@ public class MidiPcm16X2Generator : Pcm16X2Generator
         _oSample = sample;
     }
 
-    public override int FillBuffer(int samples, Memory<short> buffer, CancellationToken cancellationToken = default) =>
-        LoadBuffer(samples, buffer);
+    public override int FillBuffer(int samples, Memory<short> buffer, CancellationToken cancellationToken = default)
+    {
+        return LoadBuffer(samples, buffer);
+    }
 
-    public override async ValueTask<int> FillBufferAsync(int samples, Memory<short> buffer, CancellationToken cancellationToken = default) =>
-        await Task.Run(() => LoadBuffer(samples, buffer), cancellationToken);
+    public override async ValueTask<int> FillBufferAsync(int samples, Memory<short> buffer, CancellationToken cancellationToken = default)
+    {
+        return await Task.Run(() => LoadBuffer(samples, buffer), cancellationToken);
+    }
 
     private int LoadBuffer(int samples, Memory<short> buffer)
     {

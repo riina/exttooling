@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Playful.Gba\Playful.Gba.csproj" />
     <ProjectReference Include="..\Playful\Playful.csproj" />
+    <ProjectReference Include="..\Playful.Common\Playful.Common.csproj" />
   </ItemGroup>
 
 </Project>

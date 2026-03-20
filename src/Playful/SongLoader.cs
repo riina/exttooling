@@ -4,5 +4,5 @@ namespace Playful;
 
 public abstract class SongLoader
 {
-    public abstract bool TryLoadSongs(Stream stream, Uri uri, [NotNullWhen(true)] out IReadOnlyCollection<MSong>? songs);
+    public abstract bool TryLoadSongs(Stream stream, Uri uri, [NotNullWhen(true)] out IReadOnlyCollection<PlayableSong>? songs);
 }

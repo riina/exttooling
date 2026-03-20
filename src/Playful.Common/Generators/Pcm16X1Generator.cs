@@ -1,4 +1,4 @@
-namespace Playful;
+namespace Playful.Common.Generators;
 
 public abstract class Pcm16X1Generator : SoundGenerator<short>
 {

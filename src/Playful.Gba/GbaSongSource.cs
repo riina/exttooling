@@ -6,8 +6,8 @@ namespace Playful.Gba;
 
 public class GbaSongSource
 {
-    private static readonly Dictionary<string, string> _codeMap = new() { { "01", "Nintendo" }, { "08", "Capcom" } };
-    public static readonly IReadOnlyDictionary<string, string> CodeMap = _codeMap;
+    private static readonly Dictionary<string, string> s_codeMap = new() { { "01", "Nintendo" }, { "08", "Capcom" } };
+    public static readonly IReadOnlyDictionary<string, string> CodeMap = s_codeMap;
     public readonly IReadOnlyList<GbaSong> Songs;
 
     private const int SampleRate = 48000;//22050;
@@ -20,7 +20,7 @@ public class GbaSongSource
         stream.CopyTo(ms);
         string gameCode = Processor.Instance.ReadUtf8StringFromOffset(ms, 0xA0, out _, out _, 12);
         string makerCode = Processor.Instance.ReadUtf8StringFromOffset(ms, 0xB0, out _, out _, 2);
-        _codeMap.TryGetValue(makerCode, out string? maker);
+        s_codeMap.TryGetValue(makerCode, out string? maker);
         _mr = new MemoryRipper(ms, settings ?? new GbaMusRipper.Settings(ImproveSoundfontCompliance: true));
         MemoryStream soundfontStream = new();
         _mr.WriteSoundFont(soundfontStream);
@@ -40,7 +40,7 @@ public class GbaSongSource
                 {
                     continue;
                 }
-                songs.Add(new GbaSong(this, song, gameCode, i++, maker, sr.CalculateDuration()));
+                songs.Add(new GbaSong(this, song, gameCode, i++, maker, sr.CalculateDuration() is var d ? TimeSpan.FromSeconds(d) : null));
             }
             catch
             {

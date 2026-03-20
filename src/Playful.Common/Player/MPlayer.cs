@@ -1,9 +1,9 @@
 using System.Collections;
 using System.Diagnostics;
 
-namespace Playful;
+namespace Playful.Common.Player;
 
-public sealed class MPlayer : IDisposable, IList<MSong>
+public sealed class MPlayer : IDisposable, IList<PlayableSong>
 {
     public bool Active => !_disposed;
 
@@ -20,7 +20,7 @@ public sealed class MPlayer : IDisposable, IList<MSong>
     private volatile int _started;
 
     private MPlayerOutput? _output;
-    private MSong? _song;
+    private PlayableSong? _song;
     private Guid _guid;
     private bool _plEnded;
 
@@ -228,31 +228,31 @@ public sealed class MPlayer : IDisposable, IList<MSong>
         _are.Dispose();
     }
 
-    public IEnumerator<MSong> GetEnumerator() => _songs.GetEnumerator();
+    public IEnumerator<PlayableSong> GetEnumerator() => _songs.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_songs).GetEnumerator();
 
-    public void Add(MSong item) => _songs.Add(item);
+    public void Add(PlayableSong item) => _songs.Add(item);
 
     public void Clear() => _songs.Clear();
 
-    public bool Contains(MSong item) => _songs.Contains(item);
+    public bool Contains(PlayableSong item) => _songs.Contains(item);
 
-    public void CopyTo(MSong[] array, int arrayIndex) => _songs.CopyTo(array, arrayIndex);
+    public void CopyTo(PlayableSong[] array, int arrayIndex) => _songs.CopyTo(array, arrayIndex);
 
-    public bool Remove(MSong item) => _songs.Remove(item);
+    public bool Remove(PlayableSong item) => _songs.Remove(item);
 
     public int Count => _songs.Count;
 
     public bool IsReadOnly => _songs.IsReadOnly;
 
-    public int IndexOf(MSong item) => _songs.IndexOf(item);
+    public int IndexOf(PlayableSong item) => _songs.IndexOf(item);
 
-    public void Insert(int index, MSong item) => _songs.Insert(index, item);
+    public void Insert(int index, PlayableSong item) => _songs.Insert(index, item);
 
     public void RemoveAt(int index) => _songs.RemoveAt(index);
 
-    public MSong this[int index]
+    public PlayableSong this[int index]
     {
         get => _songs[index];
         set => _songs[index] = value;

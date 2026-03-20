@@ -1,23 +1,23 @@
 using System.Collections;
 
-namespace Playful;
+namespace Playful.Common.Player;
 
-internal class TaggedPlaylist : IList<MSong>
+internal class TaggedPlaylist : IList<PlayableSong>
 {
     internal readonly List<Guid> Guids;
-    private readonly List<MSong> _songs;
+    private readonly List<PlayableSong> _songs;
 
     public TaggedPlaylist()
     {
-        _songs = new List<MSong>();
+        _songs = new List<PlayableSong>();
         Guids = new List<Guid>();
     }
 
-    public IEnumerator<MSong> GetEnumerator() => _songs.GetEnumerator();
+    public IEnumerator<PlayableSong> GetEnumerator() => _songs.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => _songs.GetEnumerator();
 
-    public void Add(MSong item)
+    public void Add(PlayableSong item)
     {
         _songs.Add(item);
         Guids.Add(Guid.NewGuid());
@@ -29,11 +29,11 @@ internal class TaggedPlaylist : IList<MSong>
         Guids.Clear();
     }
 
-    public bool Contains(MSong item) => _songs.Contains(item);
+    public bool Contains(PlayableSong item) => _songs.Contains(item);
 
-    public void CopyTo(MSong[] array, int arrayIndex) => _songs.CopyTo(array, arrayIndex);
+    public void CopyTo(PlayableSong[] array, int arrayIndex) => _songs.CopyTo(array, arrayIndex);
 
-    public bool Remove(MSong item)
+    public bool Remove(PlayableSong item)
     {
         int index = IndexOf(item);
         if (index == -1)
@@ -48,11 +48,11 @@ internal class TaggedPlaylist : IList<MSong>
     public int Count => _songs.Count;
     public bool IsReadOnly => false;
 
-    public int IndexOf(MSong item) => _songs.IndexOf(item);
+    public int IndexOf(PlayableSong item) => _songs.IndexOf(item);
 
     public int IndexOfGuid(Guid item) => Guids.IndexOf(item);
 
-    public void Insert(int index, MSong item)
+    public void Insert(int index, PlayableSong item)
     {
         _songs.Insert(index, item);
         Guids.Insert(index, Guid.NewGuid());
@@ -64,7 +64,7 @@ internal class TaggedPlaylist : IList<MSong>
         Guids.RemoveAt(index);
     }
 
-    public MSong this[int index]
+    public PlayableSong this[int index]
     {
         get => _songs[index];
         set

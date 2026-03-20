@@ -8,6 +8,7 @@
   <Project Path="GbaSnd/GbaSnd.csproj" />
   <Project Path="norco/norco.csproj" />
   <Project Path="Playful/Playful.csproj" />
+  <Project Path="Playful.Common/Playful.Common.csproj" />
   <Project Path="Playful.Gba/Playful.Gba.csproj" />
   <Project Path="../ext/GbaMus/GbaMus/GbaMus.csproj" />
   <Project Path="../ext/MeltySynth/MeltySynth/MeltySynth.csproj" />

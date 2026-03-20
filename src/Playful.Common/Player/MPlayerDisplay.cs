@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Text;
 using EA;
 
-namespace Playful;
+namespace Playful.Common.Player;
 
 public sealed class MPlayerDisplay : IDisposable
 {

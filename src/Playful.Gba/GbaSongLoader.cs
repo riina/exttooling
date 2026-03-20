@@ -5,7 +5,7 @@ namespace Playful.Gba;
 [SongLoaderInfo("gba")]
 public class GbaSongLoader : SongLoader
 {
-    public override bool TryLoadSongs(Stream stream, Uri uri, [NotNullWhen(true)] out IReadOnlyCollection<MSong>? songs)
+    public override bool TryLoadSongs(Stream stream, Uri uri, [NotNullWhen(true)] out IReadOnlyCollection<PlayableSong>? songs)
     {
         string localPath = uri.LocalPath;
         if (!".gba".Equals(Path.GetExtension(localPath), StringComparison.InvariantCultureIgnoreCase))
@@ -25,7 +25,7 @@ public class GbaSongLoader : SongLoader
         try
         {
             GbaSongSource source = new(stream);
-            songs = songIds.Any() ? source.Songs.Where(s => songIds.Contains(s.SongId)).OfType<MSong>().ToList() : new List<MSong>(source.Songs);
+            songs = songIds.Any() ? source.Songs.Where(s => songIds.Contains(s.SongId)).OfType<PlayableSong>().ToList() : new List<PlayableSong>(source.Songs);
             return true;
         }
         catch
