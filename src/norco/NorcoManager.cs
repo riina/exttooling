@@ -11,7 +11,6 @@ namespace norco;
 
 public sealed class NorcoManager : IDisposable
 {
-    private readonly NorcoOptions _options;
     private const string Header = "</>:jmp n/m:prev/next space:play/pause q:ex";
 
     static NorcoManager()
@@ -33,8 +32,14 @@ public sealed class NorcoManager : IDisposable
             {
                 try
                 {
-                    if (type.GetCustomAttribute<SongLoaderInfoAttribute>() is not { } attr || s_loaders.ContainsKey(attr.Name)) continue;
-                    if (Activator.CreateInstance(type) is not SongLoader sl) continue;
+                    if (type.GetCustomAttribute<SongLoaderInfoAttribute>() is not { } attr || s_loaders.ContainsKey(attr.Name))
+                    {
+                        continue;
+                    }
+                    if (Activator.CreateInstance(type) is not SongLoader sl)
+                    {
+                        continue;
+                    }
                     s_loaders.Add(attr.Name, sl);
                 }
                 catch
@@ -58,10 +63,9 @@ public sealed class NorcoManager : IDisposable
 
     public NorcoManager(NorcoOptions options)
     {
-        _options = options;
         _playlistManager = new PlaylistManager(PlaylistManagerOnUpdatedPlaylist, PlaylistManagerChanged);
         _currentPlaylist = new Playlist("", Array.Empty<JsonElement>());
-        if (_options.ListenPort is { } listenPort)
+        if (options.ListenPort is { } listenPort)
         {
             _tcp = new TcpListener(new IPEndPoint(IPAddress.Loopback, listenPort));
             // TODO handle incoming connections with DisplayStateWriter
@@ -80,7 +84,6 @@ public sealed class NorcoManager : IDisposable
         LeftArrow,
         RightArrow,
         Spacebar
-
     }
 
     private interface IControlBackend
@@ -138,7 +141,20 @@ public sealed class NorcoManager : IDisposable
 
     public async Task ExecuteAsync()
     {
-        Console.CursorVisible = false;
+        bool cursorWasVisible = !OperatingSystem.IsWindows() || Console.CursorVisible;
+        try
+        {
+            Console.CursorVisible = false;
+            await ExecuteInternalAsync();
+        }
+        finally
+        {
+            Console.CursorVisible = cursorWasVisible;
+        }
+    }
+
+    private async Task ExecuteInternalAsync()
+    {
         UpdatePlaylistSelector();
         DrawPlaylistScreen();
         IControlBackend controlBackend = Console.IsInputRedirected ? new AltControlBackend() : new BasicControlBackend();
@@ -160,23 +176,29 @@ public sealed class NorcoManager : IDisposable
                     case ControlKey.UpArrow:
                         {
                             Guid guid = _playlistManager.NameMapping.Select(v => v.Value.Id).TakeWhile(v => v != _playlistSelector).LastOrDefault();
-                            _playlistSelector = guid != default ? guid : _playlistManager.NameMapping.Select(v => v.Value.Id).FirstOrDefault();
+                            _playlistSelector = guid != Guid.Empty ? guid : _playlistManager.NameMapping.Select(v => v.Value.Id).FirstOrDefault();
                             break;
                         }
                     case ControlKey.DownArrow:
                         {
                             Guid guid = _playlistManager.NameMapping.Select(v => v.Value.Id).SkipWhile(v => v != _playlistSelector).Skip(1).FirstOrDefault();
-                            _playlistSelector = guid != default ? guid : _playlistManager.NameMapping.Select(v => v.Value.Id).LastOrDefault();
+                            _playlistSelector = guid != Guid.Empty ? guid : _playlistManager.NameMapping.Select(v => v.Value.Id).LastOrDefault();
                             break;
                         }
                     case ControlKey.Enter:
                         {
-                            if (!_playlistManager.TryLoadPlaylist(_playlistSelector, out Playlist? playlist)) break;
+                            if (!_playlistManager.TryLoadPlaylist(_playlistSelector, out Playlist? playlist))
+                            {
+                                break;
+                            }
                             _currentPlaylistGuid = _playlistSelector;
                             _currentPlaylist = playlist;
                             List<MSong> songs = new();
                             foreach (JsonElement x in playlist.Items) songs.AddRange(GetSongs(x));
-                            if (!songs.Any()) break;
+                            if (!songs.Any())
+                            {
+                                break;
+                            }
                             using MPlayer mp = new();
                             foreach (MSong song in songs)
                                 mp.Add(song);
@@ -191,12 +213,23 @@ public sealed class NorcoManager : IDisposable
                             bool playing = true;
                             while (true)
                             {
-                                if (mp.Ended || !mp.Active) break;
-                                if (dt.IsFaulted) throw dt.Exception!;
-                                if (t.IsFaulted) throw t.Exception!;
+                                if (mp.Ended || !mp.Active)
+                                {
+                                    break;
+                                }
+                                if (dt.IsFaulted)
+                                {
+                                    throw dt.Exception!;
+                                }
+                                if (t.IsFaulted)
+                                {
+                                    throw t.Exception!;
+                                }
                                 bool setPlaying = playing;
                                 if (mp.TryGetDisplayState(out MPlayerDisplayState displayState))
+                                {
                                     display.SetDisplayState(displayState with { Message = Header });
+                                }
                                 await Task.Delay(10, default);
                                 int transport = 0;
                                 bool spaceLast = false;
@@ -226,14 +259,29 @@ public sealed class NorcoManager : IDisposable
                                         case ControlKey.Q:
                                             goto quitPlayer;
                                     }
-                                    if (vec != 0) break;
+                                    if (vec != 0)
+                                    {
+                                        break;
+                                    }
                                 }
-                                if (vec != 0) mp.SeekTrack(vec);
-                                if (transport != 0) await mp.PlaySeekAsync(transport, default);
+                                if (vec != 0)
+                                {
+                                    mp.SeekTrack(vec);
+                                }
+                                if (transport != 0)
+                                {
+                                    await mp.PlaySeekAsync(transport, cancellationToken: default);
+                                }
                                 if (setPlaying != playing && spaceLast)
                                 {
-                                    if (setPlaying) await mp.PlaySeekAsync(transport, default);
-                                    else mp.Stop();
+                                    if (setPlaying)
+                                    {
+                                        await mp.PlaySeekAsync(transport, cancellationToken: default);
+                                    }
+                                    else
+                                    {
+                                        mp.Stop();
+                                    }
                                 }
                                 playing = setPlaying;
                             }
@@ -266,7 +314,10 @@ public sealed class NorcoManager : IDisposable
                 UpdatePlaylistSelector();
                 DrawPlaylistScreen();
             }
-            else await Task.Delay(10);
+            else
+            {
+                await Task.Delay(10);
+            }
         }
     }
 
@@ -280,7 +331,9 @@ public sealed class NorcoManager : IDisposable
             foreach (SongLoader loader in s_loaders.Values)
             {
                 if (loader.TryLoadSongs(fs, uri, out IReadOnlyCollection<MSong>? lSongs) && lSongs.Any())
+                {
                     songs.AddRange(lSongs);
+                }
             }
             return songs;
         }
@@ -290,15 +343,18 @@ public sealed class NorcoManager : IDisposable
     private void UpdatePlaylistSelector()
     {
         Guid guid = _playlistManager.NameMapping.Select(v => v.Value.Id).FirstOrDefault(v => v == _playlistSelector);
-        _playlistSelector = guid != default ? guid : _playlistManager.NameMapping.Select(v => v.Value.Id).FirstOrDefault();
+        _playlistSelector = guid != Guid.Empty ? guid : _playlistManager.NameMapping.Select(v => v.Value.Id).FirstOrDefault();
     }
 
     private void DrawPlaylistScreen()
     {
-        if (Console.WindowWidth < 5) return;
+        if (Console.WindowWidth < 5)
+        {
+            return;
+        }
         int nameSize = Console.WindowWidth - 3 - 2;
         Console.Clear();
-        int index = _playlistSelector == default ? 0 : _playlistManager.NameMapping.Select(v => v.Value.Id).TakeWhile(v => v != _playlistSelector).Count();
+        int index = _playlistSelector == Guid.Empty ? 0 : _playlistManager.NameMapping.Select(v => v.Value.Id).TakeWhile(v => v != _playlistSelector).Count();
         int skip = 0;
         int h = Console.WindowHeight - 1, h2 = h / 2;
         int c = _playlistManager.NameMapping.Count;
@@ -315,16 +371,25 @@ public sealed class NorcoManager : IDisposable
 
     private string GetCappedString(string text, int width)
     {
-        if (EastAsianWidth.GetWidth(text) <= width) return text;
+        if (EastAsianWidth.GetWidth(text) <= width)
+        {
+            return text;
+        }
         StringBuilder sb = new();
         for (int i = 0; width > 0 && i < text.Length; i++)
         {
             char c = text[i];
             int w;
-            if (char.IsLowSurrogate(c)) break;
+            if (char.IsLowSurrogate(c))
+            {
+                break;
+            }
             if (char.IsHighSurrogate(c))
             {
-                if (i + 1 == text.Length) break;
+                if (i + 1 == text.Length)
+                {
+                    break;
+                }
                 w = EastAsianWidth.GetWidthOfCodePoint(text, i);
                 if (w > width)
                 {

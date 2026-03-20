@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Diagnostics;
-using OpenTK.Audio.OpenAL;
 
 namespace Playful;
 
@@ -79,7 +78,10 @@ public sealed class MPlayer : IDisposable, IList<MSong>
                 _are.WaitOne();
                 try
                 {
-                    if (_index >= _songs.Count) break;
+                    if (_index >= _songs.Count)
+                    {
+                        break;
+                    }
                     _index = Math.Max(_index, 0);
                     _song = _songs[_index];
                     _guid = _songs.Guids[_index];
@@ -111,13 +113,20 @@ public sealed class MPlayer : IDisposable, IList<MSong>
                             if (vec == -1)
                             {
                                 if (p.TimeApprox < 2.0)
+                                {
                                     vec--;
+                                }
                             }
                             else
+                            {
                                 vec--;
+                            }
                             break;
                         }
-                        if (p.PlayState == PlayState.Ended) break;
+                        if (p.PlayState == PlayState.Ended)
+                        {
+                            break;
+                        }
                     }
                     finally
                     {
@@ -131,7 +140,7 @@ public sealed class MPlayer : IDisposable, IList<MSong>
                     _index = _songs.IndexOfGuid(_guid) + 1 + vec;
                     _output = null;
                     _song = null;
-                    _guid = default;
+                    _guid = Guid.Empty;
                 }
                 finally
                 {
@@ -152,7 +161,10 @@ public sealed class MPlayer : IDisposable, IList<MSong>
         _are.WaitOne();
         try
         {
-            if (_output == null) return;
+            if (_output == null)
+            {
+                return;
+            }
             _output.Stop();
         }
         finally
@@ -167,7 +179,10 @@ public sealed class MPlayer : IDisposable, IList<MSong>
         _are.WaitOne();
         try
         {
-            if (_output == null) return;
+            if (_output == null)
+            {
+                return;
+            }
             await _output.PlaySeekAsync(delta, cancellationToken);
         }
         finally
@@ -178,18 +193,27 @@ public sealed class MPlayer : IDisposable, IList<MSong>
 
     public void SeekTrack(int delta)
     {
-        if (delta == 0) return;
+        if (delta == 0)
+        {
+            return;
+        }
         _vec = delta;
     }
 
     private void EnableStartOnce()
     {
-        if (Interlocked.CompareExchange(ref _started, 1, 0) == 1) throw new InvalidOperationException("Cannot start display more than once");
+        if (Interlocked.CompareExchange(ref _started, 1, 0) == 1)
+        {
+            throw new InvalidOperationException("Cannot start display more than once");
+        }
     }
 
     private void EnsureNotDisposed()
     {
-        if (_disposed) throw new InvalidOperationException();
+        if (_disposed)
+        {
+            throw new InvalidOperationException();
+        }
     }
 
     public void Dispose()

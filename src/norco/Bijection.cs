@@ -72,7 +72,10 @@ public class Bijection<TA, TB>: ICollection<KeyValuePair<TA, TB>>, IReadOnlyColl
     /// <returns>True if successfully added.</returns>
     public bool TryAdd(TA a, TB b)
     {
-        if (_aToB.ContainsKey(a) || _bToA.ContainsKey(b)) return false;
+        if (_aToB.ContainsKey(a) || _bToA.ContainsKey(b))
+        {
+            return false;
+        }
         AddInternal(a, b);
         return true;
     }
@@ -120,7 +123,10 @@ public class Bijection<TA, TB>: ICollection<KeyValuePair<TA, TB>>, IReadOnlyColl
     /// <returns>True if the pair existed and was removed.</returns>
     public bool RemoveA(TA a)
     {
-        if (!_aToB.TryGetValue(a, out TB? b)) return false;
+        if (!_aToB.TryGetValue(a, out TB? b))
+        {
+            return false;
+        }
         RemoveInternal(a, b);
         return true;
     }
@@ -132,7 +138,10 @@ public class Bijection<TA, TB>: ICollection<KeyValuePair<TA, TB>>, IReadOnlyColl
     /// <returns>True if the pair existed and was removed.</returns>
     public bool RemoveB(TB b)
     {
-        if (!_bToA.TryGetValue(b, out TA? a)) return false;
+        if (!_bToA.TryGetValue(b, out TA? a))
+        {
+            return false;
+        }
         RemoveInternal(a, b);
         return true;
     }
@@ -161,13 +170,21 @@ public class Bijection<TA, TB>: ICollection<KeyValuePair<TA, TB>>, IReadOnlyColl
     public void CopyTo(KeyValuePair<TA, TB>[] array, int arrayIndex)
     {
         if (array == null)
+        {
             throw new ArgumentNullException(nameof(array));
+        }
         if (arrayIndex < 0)
+        {
             throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+        }
         if (array.Rank != 1)
+        {
             throw new ArgumentException($"{nameof(array)} is not single-dimensional");
+        }
         if (array.Length - arrayIndex < Count)
+        {
             throw new ArgumentException("Insufficient space to copy collection to array");
+        }
         foreach ((KeyValuePair<TA, TB> kvp, int i) in _aToB.Select((v, i) => (v, arrayIndex + i)))
             array[i] = kvp;
     }
@@ -175,7 +192,10 @@ public class Bijection<TA, TB>: ICollection<KeyValuePair<TA, TB>>, IReadOnlyColl
     /// <inheritdoc />
     public bool Remove(KeyValuePair<TA, TB> item)
     {
-        if (!_aToB.TryGetValue(item.Key, out TB? b) || !Equals(b, item.Value)) return false;
+        if (!_aToB.TryGetValue(item.Key, out TB? b) || !Equals(b, item.Value))
+        {
+            return false;
+        }
         _aToB.Remove(item.Key);
         _bToA.Remove(b);
         return true;
@@ -204,8 +224,14 @@ public class Bijection<TA, TB>: ICollection<KeyValuePair<TA, TB>>, IReadOnlyColl
 
     private void EnsureNotExists(TA a, TB b)
     {
-        if (_aToB.ContainsKey(a)) throw new DuplicateKeyException(a);
-        if (_bToA.ContainsKey(b)) throw new DuplicateKeyException(b);
+        if (_aToB.ContainsKey(a))
+        {
+            throw new DuplicateKeyException(a);
+        }
+        if (_bToA.ContainsKey(b))
+        {
+            throw new DuplicateKeyException(b);
+        }
     }
 
     #endregion

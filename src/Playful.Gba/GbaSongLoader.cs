@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using GbaMus;
 
 namespace Playful.Gba;
 
@@ -9,16 +8,23 @@ public class GbaSongLoader : SongLoader
     public override bool TryLoadSongs(Stream stream, Uri uri, [NotNullWhen(true)] out IReadOnlyCollection<MSong>? songs)
     {
         string localPath = uri.LocalPath;
-        if (!".gba".Equals(Path.GetExtension(localPath), StringComparison.InvariantCultureIgnoreCase)) goto fail;
+        if (!".gba".Equals(Path.GetExtension(localPath), StringComparison.InvariantCultureIgnoreCase))
+        {
+            goto fail;
+        }
         string frag = uri.Fragment;
         List<int> songIds = new();
         if (!string.IsNullOrEmpty(frag))
+        {
             foreach (string songIdStr in frag[1..].Split(','))
                 if (int.TryParse(songIdStr, out int songId))
+                {
                     songIds.Add(songId);
+                }
+        }
         try
         {
-            GbaSongSource source = new(stream, new GbaMusRipper.Settings(ImproveSoundfontCompliance: true));
+            GbaSongSource source = new(stream);
             songs = songIds.Any() ? source.Songs.Where(s => songIds.Contains(s.SongId)).OfType<MSong>().ToList() : new List<MSong>(source.Songs);
             return true;
         }

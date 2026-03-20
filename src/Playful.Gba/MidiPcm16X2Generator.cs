@@ -48,7 +48,10 @@ public class MidiPcm16X2Generator : Pcm16X2Generator
 
     private int LoadBuffer(int samples, Memory<short> buffer)
     {
-        if (samples <= 0) return 0;
+        if (samples <= 0)
+        {
+            return 0;
+        }
         int numSamples;
         if (TryGetCacheBuffer(_oSample, out int eSamples, out Memory<short> eBuffer))
         {
@@ -56,7 +59,10 @@ public class MidiPcm16X2Generator : Pcm16X2Generator
         }
         else
         {
-            if (_iSample > _oSample) ResetPlayer();
+            if (_iSample > _oSample)
+            {
+                ResetPlayer();
+            }
             int iSample;
             do
             {
@@ -64,13 +70,19 @@ public class MidiPcm16X2Generator : Pcm16X2Generator
                 eBuffer = new short[CacheBufferSamples * 2];
                 numSamples = ReadAndCache(CacheBufferSamples, eBuffer);
             } while (iSample + numSamples <= _oSample && numSamples > 0);
-            if (numSamples <= 0) return 0;
+            if (numSamples <= 0)
+            {
+                return 0;
+            }
             int trimStart = _oSample - iSample;
             numSamples -= trimStart;
             numSamples = Math.Min(samples, numSamples);
             eBuffer = eBuffer.Slice(trimStart * 2, numSamples * 2);
         }
-        if (numSamples <= 0) return 0;
+        if (numSamples <= 0)
+        {
+            return 0;
+        }
         eBuffer.Span[..(numSamples * 2)].CopyTo(buffer.Span);
         _oSample += numSamples;
         return numSamples;
@@ -79,17 +91,27 @@ public class MidiPcm16X2Generator : Pcm16X2Generator
     private int ReadAndCache(int samples, Memory<short> buffer)
     {
         int available = _numSamples - _iSample;
-        if (available <= 0) return 0;
+        if (available <= 0)
+        {
+            return 0;
+        }
         int numSamples = Math.Min(samples, available);
         _sequencer.RenderInterleavedInt16(buffer.Span[..(numSamples * 2)]);
-        if (!_cache.ContainsKey(_iSample)) _cache.Add(_iSample, new CacheBuffer(new Range(_iSample, _iSample + numSamples), numSamples, buffer[..(numSamples * 2)]));
+        if (!_cache.ContainsKey(_iSample))
+        {
+            _cache.Add(_iSample, new CacheBuffer(new Range(_iSample, _iSample + numSamples), numSamples, buffer[..(numSamples * 2)]));
+        }
         _iSample += numSamples;
         while (_cache.Count * CacheBufferSamples / (double)Frequency > MaxCacheBufferSeconds)
         {
             if (Math.Abs(_cache.Keys[0] - _iSample) > Math.Abs(_cache.Keys[^1] - _iSample))
+            {
                 _cache.RemoveAt(0);
+            }
             else
+            {
                 _cache.RemoveAt(_cache.Count - 1);
+            }
         }
         return numSamples;
     }

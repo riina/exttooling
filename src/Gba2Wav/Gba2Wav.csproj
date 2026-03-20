@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Fp.Plus" />
-    <PackageReference Include="Ask" />
+    <PackageReference Include="System.CommandLine" />
   </ItemGroup>
 
   <ItemGroup>

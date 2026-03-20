@@ -7,7 +7,7 @@ public sealed class PlaylistManager : IDisposable
 {
     static PlaylistManager()
     {
-        s_playlistDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, PlaylistDirectoryName);
+        s_playlistDirectory = Path.Join(AppDomain.CurrentDomain.BaseDirectory, PlaylistDirectoryName);
     }
 
     public const string PlaylistDirectoryName = "playlists";
@@ -34,7 +34,10 @@ public sealed class PlaylistManager : IDisposable
     {
         _playlistDirectory = playlistDirectory;
         _changeAction = changeAction;
-        if (!Directory.Exists(playlistDirectory)) Directory.CreateDirectory(playlistDirectory);
+        if (!Directory.Exists(playlistDirectory))
+        {
+            Directory.CreateDirectory(playlistDirectory);
+        }
         UpdatedPlaylist = updatedPlaylistDelegate;
         _mapping = new Bijection<Guid, string>();
         _nameMapping = new SortedList<string, (Guid Id, string Name)>();
@@ -45,7 +48,10 @@ public sealed class PlaylistManager : IDisposable
             foreach (string file in Directory.EnumerateFiles(dir, "*.json"))
             {
                 string to = Path.GetFullPath(file);
-                if (!TryGetSubPath(to, out string? toFull, out string? toSub)) continue;
+                if (!TryGetSubPath(to, out string? toFull, out string? toSub))
+                {
+                    continue;
+                }
                 Guid guid = Guid.NewGuid();
                 _mapping.Add(guid, to);
                 string toName = GetName(toFull);
@@ -72,12 +78,24 @@ public sealed class PlaylistManager : IDisposable
     private void FswOnRenamed(object sender, RenamedEventArgs e)
     {
         string from = e.OldFullPath, to = e.FullPath;
-        if (!TryGetSubPath(from, out string? fromFull, out string? fromSub)) return;
-        if (!_mapping.TryGetA(fromFull, out Guid guid)) return;
-        if (!_nameMapping.TryGetValue(fromSub, out var fromName)) return;
+        if (!TryGetSubPath(from, out string? fromFull, out string? fromSub))
+        {
+            return;
+        }
+        if (!_mapping.TryGetA(fromFull, out Guid guid))
+        {
+            return;
+        }
+        if (!_nameMapping.TryGetValue(fromSub, out var fromName))
+        {
+            return;
+        }
         _mapping.RemoveB(fromFull);
         _nameMapping.Remove(fromSub);
-        if (!TryGetSubPath(to, out string? toFull, out string? toSub)) return;
+        if (!TryGetSubPath(to, out string? toFull, out string? toSub))
+        {
+            return;
+        }
         _mapping.RemoveB(toFull);
         _mapping.Add(guid, toFull);
         string toName = fromName.Name;
@@ -89,7 +107,10 @@ public sealed class PlaylistManager : IDisposable
     private void FswOnDeleted(object sender, FileSystemEventArgs e)
     {
         string to = e.FullPath;
-        if (!TryGetSubPath(to, out string? toFull, out string? toSub)) return;
+        if (!TryGetSubPath(to, out string? toFull, out string? toSub))
+        {
+            return;
+        }
         _mapping.RemoveB(toFull);
         _nameMapping.Remove(toSub);
         _changeAction?.Invoke();
@@ -98,8 +119,14 @@ public sealed class PlaylistManager : IDisposable
     private void FswOnCreated(object sender, FileSystemEventArgs e)
     {
         string to = e.FullPath;
-        if (!TryGetSubPath(to, out string? toFull, out string? toSub)) return;
-        if (_mapping.ContainsB(toFull)) return;
+        if (!TryGetSubPath(to, out string? toFull, out string? toSub))
+        {
+            return;
+        }
+        if (_mapping.ContainsB(toFull))
+        {
+            return;
+        }
         Guid guid = Guid.NewGuid();
         _mapping.Add(guid, toFull);
         string toName = GetName(toFull);
@@ -111,9 +138,18 @@ public sealed class PlaylistManager : IDisposable
     private void FswOnChanged(object sender, FileSystemEventArgs e)
     {
         string to = e.FullPath;
-        if (!TryGetSubPath(to, out string? toFull, out string? toSub)) return;
-        if (!_mapping.TryGetA(toFull, out Guid guid)) return;
-        if (!_nameMapping.TryGetValue(toSub, out var nameMap)) return;
+        if (!TryGetSubPath(to, out string? toFull, out string? toSub))
+        {
+            return;
+        }
+        if (!_mapping.TryGetA(toFull, out Guid guid))
+        {
+            return;
+        }
+        if (!_nameMapping.TryGetValue(toSub, out var nameMap))
+        {
+            return;
+        }
         _nameMapping.Remove(toSub);
         string toName = GetName(toFull);
         _nameMapping[toSub] = (nameMap.Id, toName);
@@ -125,7 +161,10 @@ public sealed class PlaylistManager : IDisposable
     {
         path = Path.GetFullPath(path);
         string sub = Path.GetRelativePath(_playlistDirectory, path);
-        if (sub == path || !path.EndsWith(sub)) goto fail;
+        if (sub == path || !path.EndsWith(sub))
+        {
+            goto fail;
+        }
         fullPath = path;
         subPath = sub;
         return true;
@@ -140,7 +179,9 @@ public sealed class PlaylistManager : IDisposable
         try
         {
             if (TryLoadPlaylist(path, out Playlist? playlist) && !string.IsNullOrWhiteSpace(playlist.Name))
+            {
                 return playlist.Name;
+            }
         }
         catch
         {

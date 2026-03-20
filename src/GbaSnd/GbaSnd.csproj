@@ -6,14 +6,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  
+
   <ItemGroup>
-    <PackageReference Include="Ask" />
+    <PackageReference Include="EA" />
     <PackageReference Include="Fp.Plus" />
     <PackageReference Include="OpenTK" />
-    <PackageReference Include="EA" />
+    <PackageReference Include="System.CommandLine" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\Playful\Playful.csproj" />
     <ProjectReference Include="..\Playful.Gba\Playful.Gba.csproj" />

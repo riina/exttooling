@@ -36,7 +36,6 @@
   <ItemGroup>
     <PackageReference Include="OpenTK" />
     <PackageReference Include="EA" />
-    <PackageReference Include="Azura.Generator" />
   </ItemGroup>
 
 </Project>

@@ -36,7 +36,10 @@ internal class TaggedPlaylist : IList<MSong>
     public bool Remove(MSong item)
     {
         int index = IndexOf(item);
-        if (index == -1) return false;
+        if (index == -1)
+        {
+            return false;
+        }
         _songs.RemoveAt(index);
         Guids.RemoveAt(index);
         return true;

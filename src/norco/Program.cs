@@ -1,10 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using CommandLine;
 using norco;
 
-await Parser.Default.ParseArguments<NorcoOptions>(args).WithParsedAsync(async opts =>
-{
-    using NorcoManager nm = new(opts);
-    await nm.ExecuteAsync();
-});
+var rootCommand = new NorcoRootCommand();
+var parseResult = rootCommand.Parse(args);
+parseResult.InvocationConfiguration.Output = Console.Error;
+parseResult.InvocationConfiguration.Error = Console.Error;
+return await parseResult.InvokeAsync();

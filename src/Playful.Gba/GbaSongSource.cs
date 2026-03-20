@@ -21,7 +21,7 @@ public class GbaSongSource
         string gameCode = Processor.Instance.ReadUtf8StringFromOffset(ms, 0xA0, out _, out _, 12);
         string makerCode = Processor.Instance.ReadUtf8StringFromOffset(ms, 0xB0, out _, out _, 2);
         _codeMap.TryGetValue(makerCode, out string? maker);
-        _mr = new MemoryRipper(ms, settings ?? new GbaMusRipper.Settings());
+        _mr = new MemoryRipper(ms, settings ?? new GbaMusRipper.Settings(ImproveSoundfontCompliance: true));
         MemoryStream soundfontStream = new();
         _mr.WriteSoundFont(soundfontStream);
         soundfontStream.Position = 0;
@@ -36,7 +36,10 @@ public class GbaSongSource
             {
                 SongRipper sr = _mr.GetSongRipper(song, true);
                 int trackCount = sr.TrackCount;
-                if (trackCount < trackThreshold) continue;
+                if (trackCount < trackThreshold)
+                {
+                    continue;
+                }
                 songs.Add(new GbaSong(this, song, gameCode, i++, maker, sr.CalculateDuration()));
             }
             catch

@@ -81,7 +81,10 @@ public sealed class MPlayerDisplay : IDisposable
         }
         int my = Math.Max(xy.Y / 2 - 3, 0);
         int boxSize = Math.Min(MaxBoxWidth, xy.X);
-        if (boxSize <= 4) return;
+        if (boxSize <= 4)
+        {
+            return;
+        }
         if (_sw.Elapsed.TotalSeconds >= 0.1)
         {
             MoveScroll(name, boxSize, ref _nameScroll, CrapGap);
@@ -93,17 +96,29 @@ public sealed class MPlayerDisplay : IDisposable
         TimeSpan elapsed = TimeSpan.FromSeconds(percent * duration);
         TimeSpan total = TimeSpan.FromSeconds(duration);
         if (my < xy.Y)
+        {
             WriteLine(left, my++, boxSize, '┌', '┐', '─', $"{i + 1}/{c}", $"{elapsed:mm\\:ss}/{total:mm\\:ss}");
+        }
         if (my < xy.Y)
+        {
             WriteBox(left, my++, boxSize, '│', '│', name, _nameScroll, CrapGap);
+        }
         if (my < xy.Y)
+        {
             WriteBox(left, my++, boxSize, '│', '│', album, _albumScroll, CrapGap);
+        }
         if (my < xy.Y)
+        {
             WriteBox(left, my++, boxSize, '│', '│', artist, _artistScroll, CrapGap);
+        }
         if (my < xy.Y)
+        {
             WriteProgressBox(left, my++, boxSize, '└', '┘', '─', playing ? '*' : '@', percent);
+        }
         if (my < xy.Y)
+        {
             WriteLine(left, my, boxSize, ' ', ' ', ' ', message ?? "");
+        }
     }
 
     private static void WriteBox(int left, int top, int boxSize, char l, char r, string text, int scroll, int loopGap)
@@ -189,8 +204,14 @@ public sealed class MPlayerDisplay : IDisposable
 
     private static void WriteProgressBox(int left, int top, int boxSize, char l, char r, char fill, char playHead, double percent)
     {
-        if (EastAsianWidth.IsFullwidthOrWide(fill)) throw new ArgumentException();
-        if (EastAsianWidth.IsFullwidthOrWide(playHead)) throw new ArgumentException();
+        if (EastAsianWidth.IsFullwidthOrWide(fill))
+        {
+            throw new ArgumentException();
+        }
+        if (EastAsianWidth.IsFullwidthOrWide(playHead))
+        {
+            throw new ArgumentException();
+        }
         StringBuilder sb = new();
         sb.Append(l);
         boxSize -= 2;
@@ -207,10 +228,14 @@ public sealed class MPlayerDisplay : IDisposable
                     sb.Append(playHead);
                 }
                 else
+                {
                     sb.Append(' ');
+                }
             }
             else
+            {
                 sb.Append(fill);
+            }
         }
         sb.Append(r);
         Console.CursorLeft = left;
@@ -233,10 +258,22 @@ public sealed class MPlayerDisplay : IDisposable
             scroll = 0;
             return;
         }
-        if (scroll >= text.Length + loopGap - 1) scroll = 0;
-        else if (scroll >= text.Length) scroll++;
-        else if (char.IsHighSurrogate(text[scroll])) scroll += 2;
-        else scroll += 1;
+        if (scroll >= text.Length + loopGap - 1)
+        {
+            scroll = 0;
+        }
+        else if (scroll >= text.Length)
+        {
+            scroll++;
+        }
+        else if (char.IsHighSurrogate(text[scroll]))
+        {
+            scroll += 2;
+        }
+        else
+        {
+            scroll += 1;
+        }
     }
 
     private static void PopulateWidth(StringBuilder sb, string text, int width, int scroll, int loopGap)
@@ -248,10 +285,16 @@ public sealed class MPlayerDisplay : IDisposable
             {
                 char c = text[i];
                 int w;
-                if (char.IsLowSurrogate(c)) break;
+                if (char.IsLowSurrogate(c))
+                {
+                    break;
+                }
                 if (char.IsHighSurrogate(c))
                 {
-                    if (i + 1 == text.Length) break;
+                    if (i + 1 == text.Length)
+                    {
+                        break;
+                    }
                     w = EastAsianWidth.GetWidthOfCodePoint(text, i);
                     if (w > width)
                     {
@@ -296,17 +339,26 @@ public sealed class MPlayerDisplay : IDisposable
 
     private void EnableStartOnce()
     {
-        if (Interlocked.CompareExchange(ref _started, 1, 0) == 1) throw new InvalidOperationException("Cannot start display more than once");
+        if (Interlocked.CompareExchange(ref _started, 1, 0) == 1)
+        {
+            throw new InvalidOperationException("Cannot start display more than once");
+        }
     }
 
     private void EnsureNotDisposed()
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(MPlayerDisplay));
+        if (_disposed)
+        {
+            throw new ObjectDisposedException(nameof(MPlayerDisplay));
+        }
     }
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
         _disposed = true;
         if (_displayTask != null)
         {
