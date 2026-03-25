@@ -173,11 +173,7 @@ public sealed class MPlayer : IDisposable, IList<PlayableSong>
         _are.WaitOne();
         try
         {
-            if (_output == null)
-            {
-                return;
-            }
-            _output.Stop();
+            _output?.Stop();
         }
         finally
         {

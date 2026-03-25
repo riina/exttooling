@@ -6,6 +6,7 @@ public sealed class MPlayerContext : IDisposable
 {
     private ALDevice _dev;
     private ALContext _context;
+    private bool _disposed;
 
     public MPlayerContext()
     {
@@ -70,9 +71,23 @@ public sealed class MPlayerContext : IDisposable
 
     public void Dispose()
     {
-        ReleaseUnmanagedResources();
+        Dispose(true);
         GC.SuppressFinalize(this);
     }
 
-    ~MPlayerContext() => ReleaseUnmanagedResources();
+    private void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // issue when stopping
+                Thread.Sleep(TimeSpan.FromSeconds(0.5));
+            }
+            ReleaseUnmanagedResources();
+        }
+        _disposed = true;
+    }
+
+    ~MPlayerContext() => Dispose(false);
 }

@@ -237,7 +237,7 @@ public sealed class NorcoManager : IDisposable
                                 {
                                     display.SetDisplayState(displayState with { Message = Header });
                                 }
-                                await Task.Delay(10, default);
+                                await Task.Delay(10, mpts.Token);
                                 int transport = 0;
                                 bool spaceLast = false;
                                 int vec = 0;
@@ -277,13 +277,13 @@ public sealed class NorcoManager : IDisposable
                                 }
                                 if (transport != 0)
                                 {
-                                    await mp.SeekMaintainStateAsync(transport, cancellationToken: default);
+                                    await mp.SeekMaintainStateAsync(transport, cancellationToken: mpts.Token);
                                 }
                                 if (setPlaying != playing && spaceLast)
                                 {
                                     if (setPlaying)
                                     {
-                                        await mp.PlaySeekAsync(transport, cancellationToken: default);
+                                        await mp.PlaySeekAsync(transport, cancellationToken: mpts.Token);
                                     }
                                     else
                                     {
@@ -293,6 +293,14 @@ public sealed class NorcoManager : IDisposable
                                 playing = setPlaying;
                             }
                             quitPlayer:
+                            try
+                            {
+                                mp.Stop();
+                            }
+                            catch
+                            {
+                                // ignored
+                            }
                             mpts.Cancel();
                             try
                             {
