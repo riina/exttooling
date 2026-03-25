@@ -147,23 +147,23 @@ public sealed class MPlayerDisplay : IDisposable
         TimeSpan total = TimeSpan.FromSeconds(duration);
         if (my < xy.Y)
         {
-            WriteLine(left, my++, boxSize, '┌', '┐', '─', $"{i + 1}/{c}", $"{elapsed:mm\\:ss}/{total:mm\\:ss}");
+            WriteLine(left, my++, boxSize, '╔', '╗', '═', $"{i + 1}/{c}", $"{elapsed:mm\\:ss}/{total:mm\\:ss}");
         }
         if (my < xy.Y)
         {
-            WriteBox(left, my++, boxSize, '│', '│', name, _nameScroll, CrapGap);
+            WriteBox(left, my++, boxSize, '║', '║', name, _nameScroll, CrapGap);
         }
         if (my < xy.Y)
         {
-            WriteBox(left, my++, boxSize, '│', '│', album, _albumScroll, CrapGap);
+            WriteBox(left, my++, boxSize, '║', '║', album, _albumScroll, CrapGap);
         }
         if (my < xy.Y)
         {
-            WriteBox(left, my++, boxSize, '│', '│', artist, _artistScroll, CrapGap);
+            WriteBox(left, my++, boxSize, '║', '║', artist, _artistScroll, CrapGap);
         }
         if (ShowDebug && debug != null && my < xy.Y)
         {
-            WriteBox(left, my++, boxSize, '│', '│', debug, _debugScroll, CrapGap);
+            WriteBox(left, my++, boxSize, '║', '║', debug, _debugScroll, CrapGap);
         }
         if (ShowCacheInfo && my < xy.Y)
         {
@@ -171,10 +171,11 @@ public sealed class MPlayerDisplay : IDisposable
                 left,
                 my++,
                 boxSize,
-                '│',
-                '│',
-                '#',
-                '+',
+                '║',
+                '║',
+                '─',
+                ' ',
+                ' ',
                 ' ',
                 percentCacheStart,
                 percentCacheEnd);
@@ -185,14 +186,15 @@ public sealed class MPlayerDisplay : IDisposable
                 left,
                 my++,
                 boxSize,
-                '└',
-                '┘',
+                '╚',
+                '╝',
+                '═',
                 '─',
-                '#',
-                '+',
+                ' ',
+                ' ',
                 ' ',
                 playing
-                    ? '*'
+                    ? '>'
                     : '@',
                 percent,
                 percentCacheStart,
@@ -300,7 +302,8 @@ public sealed class MPlayerDisplay : IDisposable
         char r,
         char fill,
         char fillCached,
-        char fillPartiallyCached,
+        char fillPartiallyCachedLeft,
+        char fillPartiallyCachedRight,
         char fillNotCached,
         char playHead,
         double percent,
@@ -315,7 +318,11 @@ public sealed class MPlayerDisplay : IDisposable
         {
             throw new ArgumentException();
         }
-        if (EastAsianWidth.IsFullwidthOrWide(fillPartiallyCached))
+        if (EastAsianWidth.IsFullwidthOrWide(fillPartiallyCachedLeft))
+        {
+            throw new ArgumentException();
+        }
+        if (EastAsianWidth.IsFullwidthOrWide(fillPartiallyCachedRight))
         {
             throw new ArgumentException();
         }
@@ -344,13 +351,13 @@ public sealed class MPlayerDisplay : IDisposable
                 {
                     sb.Append(fillNotCached);
                 }
-                else if (percentCacheStart >= startPercent && percentCacheEnd <= endPercent)
+                else if (percentCacheStart <= startPercent && percentCacheEnd >= endPercent)
                 {
                     sb.Append(fillCached);
                 }
                 else
                 {
-                    sb.Append(fillPartiallyCached);
+                    sb.Append(percentCacheStart < startPercent ? fillPartiallyCachedLeft : fillPartiallyCachedRight);
                 }
             }
             else
@@ -371,7 +378,8 @@ public sealed class MPlayerDisplay : IDisposable
         char l,
         char r,
         char fillCached,
-        char fillPartiallyCached,
+        char fillPartiallyCachedLeft,
+        char fillPartiallyCachedRight,
         char fillNotCached,
         double percentCacheStart,
         double percentCacheEnd)
@@ -380,7 +388,11 @@ public sealed class MPlayerDisplay : IDisposable
         {
             throw new ArgumentException();
         }
-        if (EastAsianWidth.IsFullwidthOrWide(fillPartiallyCached))
+        if (EastAsianWidth.IsFullwidthOrWide(fillPartiallyCachedLeft))
+        {
+            throw new ArgumentException();
+        }
+        if (EastAsianWidth.IsFullwidthOrWide(fillPartiallyCachedRight))
         {
             throw new ArgumentException();
         }
@@ -399,13 +411,13 @@ public sealed class MPlayerDisplay : IDisposable
             {
                 sb.Append(fillNotCached);
             }
-            else if (percentCacheStart >= startPercent && percentCacheEnd <= endPercent)
+            else if (percentCacheStart <= startPercent && percentCacheEnd >= endPercent)
             {
                 sb.Append(fillCached);
             }
             else
             {
-                sb.Append(fillPartiallyCached);
+                sb.Append(percentCacheStart < startPercent ? fillPartiallyCachedLeft : fillPartiallyCachedRight);
             }
         }
         sb.Append(r);
