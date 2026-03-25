@@ -271,7 +271,7 @@ public sealed class NorcoManager : IDisposable
                                 }
                                 if (transport != 0)
                                 {
-                                    await mp.PlaySeekAsync(transport, cancellationToken: default);
+                                    await mp.SeekMaintainStateAsync(transport, cancellationToken: default);
                                 }
                                 if (setPlaying != playing && spaceLast)
                                 {

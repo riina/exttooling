@@ -10,6 +10,10 @@ public abstract class SoundGenerator : IDisposable
 
     public abstract void Reset(int sample);
 
+    public abstract Range GetSurroundingCachedSampleRange(int sampleIndex);
+
+    public virtual string? GetDebugText() => null;
+
     protected virtual void Dispose(bool disposing)
     {
         if (disposing)

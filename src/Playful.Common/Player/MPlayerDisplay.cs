@@ -18,6 +18,7 @@ public sealed class MPlayerDisplay : IDisposable
     private int _nameScroll;
     private int _albumScroll;
     private int _artistScroll;
+    private int _debugScroll;
     private RunTask? _displayTask;
     //private int _scrollCtr;
 
@@ -25,7 +26,19 @@ public sealed class MPlayerDisplay : IDisposable
     {
         _are = new AutoResetEvent(true);
         _sw = new Stopwatch();
-        _displayState = new MPlayerDisplayState(0, 0, 0.0, 0.1, PlayState.Stopped, "", "", "", "");
+        _displayState = new MPlayerDisplayState(
+            0,
+            0,
+            0.0,
+            0,
+            0,
+            0.1,
+            PlayState.Stopped,
+            "",
+            "",
+            "",
+            null,
+            "");
     }
 
     private record RunTask(CancellationTokenSource Source, Task Task);
@@ -47,13 +60,32 @@ public sealed class MPlayerDisplay : IDisposable
         _nameScroll = 0;
         _albumScroll = 0;
         _artistScroll = 0;
+        _debugScroll = 0;
         while (true)
         {
             _are.WaitOne();
             try
             {
                 bool playing = _displayState.PlayState == PlayState.Playing;
-                DrawUpdate(_displayState.Name, _displayState.Album, _displayState.Artist, _displayState.Message, _displayState.Index, _displayState.Count, Math.Clamp(_displayState.Time / _displayState.Duration, 0, 1), _displayState.Duration, playing);
+                DrawUpdate(
+                    _displayState.Name,
+                    _displayState.Album,
+                    _displayState.Artist,
+                    _displayState.Debug,
+                    _displayState.Message,
+                    _displayState.Index,
+                    _displayState.Count,
+                    Math.Clamp(_displayState.Time / _displayState.Duration,
+                        0,
+                        1),
+                    Math.Clamp(_displayState.TimeCacheStart / _displayState.Duration,
+                        0,
+                        1),
+                    Math.Clamp(_displayState.TimeCacheEnd / _displayState.Duration,
+                        0,
+                        1),
+                    _displayState.Duration,
+                    playing);
                 await Task.Delay(10, cancellationToken);
             }
             finally
@@ -71,7 +103,19 @@ public sealed class MPlayerDisplay : IDisposable
         _are.Set();
     }
 
-    private void DrawUpdate(string name, string album, string artist, string? message, int i, int c, double percent, double duration, bool playing)
+    private void DrawUpdate(
+        string name,
+        string album,
+        string artist,
+        string? debug,
+        string? message,
+        int i,
+        int c,
+        double percent,
+        double percentCacheStart,
+        double percentCacheEnd,
+        double duration,
+        bool playing)
     {
         Point xy = new(Console.WindowWidth, Console.WindowHeight);
         if (_xy != xy)
@@ -90,6 +134,10 @@ public sealed class MPlayerDisplay : IDisposable
             MoveScroll(name, boxSize, ref _nameScroll, CrapGap);
             MoveScroll(album, boxSize, ref _albumScroll, CrapGap);
             MoveScroll(artist, boxSize, ref _artistScroll, CrapGap);
+            if (debug != null)
+            {
+                MoveScroll(debug, boxSize, ref _debugScroll, CrapGap);
+            }
             _sw.Restart();
         }
         int left = (xy.X - boxSize) / 2;
@@ -107,13 +155,46 @@ public sealed class MPlayerDisplay : IDisposable
         {
             WriteBox(left, my++, boxSize, '│', '│', album, _albumScroll, CrapGap);
         }
+        if (debug != null && my < xy.Y)
+        {
+            WriteBox(left, my++, boxSize, '│', '│', debug, _debugScroll, CrapGap);
+        }
         if (my < xy.Y)
         {
             WriteBox(left, my++, boxSize, '│', '│', artist, _artistScroll, CrapGap);
         }
         if (my < xy.Y)
         {
-            WriteProgressBox(left, my++, boxSize, '└', '┘', '─', playing ? '*' : '@', percent);
+            WriteCacheBox(
+                left,
+                my++,
+                boxSize,
+                '│',
+                '│',
+                '#',
+                '+',
+                ' ',
+                percentCacheStart,
+                percentCacheEnd);
+        }
+        if (my < xy.Y)
+        {
+            WriteProgressBox(
+                left,
+                my++,
+                boxSize,
+                '└',
+                '┘',
+                '─',
+                '#',
+                '+',
+                ' ',
+                playing
+                    ? '*'
+                    : '@',
+                percent,
+                percentCacheStart,
+                percentCacheEnd);
         }
         if (my < xy.Y)
         {
@@ -178,7 +259,15 @@ public sealed class MPlayerDisplay : IDisposable
         }
     }
 
-    private static void WriteLine(int left, int top, int boxSize, char l, char r, char fill, string textL, string textR)
+    private static void WriteLine(
+        int left,
+        int top,
+        int boxSize,
+        char l,
+        char r,
+        char fill,
+        string textL,
+        string textR)
     {
         int eawL = EastAsianWidth.GetWidth(textL);
         int eawR = EastAsianWidth.GetWidth(textR);
@@ -201,10 +290,34 @@ public sealed class MPlayerDisplay : IDisposable
         }
     }
 
-
-    private static void WriteProgressBox(int left, int top, int boxSize, char l, char r, char fill, char playHead, double percent)
+    private static void WriteProgressBox(
+        int left,
+        int top,
+        int boxSize,
+        char l,
+        char r,
+        char fill,
+        char fillCached,
+        char fillPartiallyCached,
+        char fillNotCached,
+        char playHead,
+        double percent,
+        double percentCacheStart,
+        double percentCacheEnd)
     {
         if (EastAsianWidth.IsFullwidthOrWide(fill))
+        {
+            throw new ArgumentException();
+        }
+        if (EastAsianWidth.IsFullwidthOrWide(fillCached))
+        {
+            throw new ArgumentException();
+        }
+        if (EastAsianWidth.IsFullwidthOrWide(fillPartiallyCached))
+        {
+            throw new ArgumentException();
+        }
+        if (EastAsianWidth.IsFullwidthOrWide(fillNotCached))
         {
             throw new ArgumentException();
         }
@@ -216,25 +329,81 @@ public sealed class MPlayerDisplay : IDisposable
         sb.Append(l);
         boxSize -= 2;
         double cPercent = 1.0 / boxSize;
-        bool first = true;
         for (int i = 0; i < boxSize; i++)
         {
-            percent -= cPercent;
-            if (percent < 0)
+            double startPercent = cPercent * i, endPercent = cPercent * (i + 1);
+            if (percent >= endPercent)
             {
-                if (first)
+                sb.Append(fill);
+            }
+            else if (percent < startPercent)
+            {
+                if (percentCacheEnd <= startPercent || percentCacheStart >= endPercent)
                 {
-                    first = false;
-                    sb.Append(playHead);
+                    sb.Append(fillNotCached);
+                }
+                else if (percentCacheStart >= startPercent && percentCacheEnd <= endPercent)
+                {
+                    sb.Append(fillCached);
                 }
                 else
                 {
-                    sb.Append(' ');
+                    sb.Append(fillPartiallyCached);
                 }
             }
             else
             {
-                sb.Append(fill);
+                sb.Append(playHead);
+            }
+        }
+        sb.Append(r);
+        Console.CursorLeft = left;
+        Console.CursorTop = top;
+        Console.Write(sb.ToString());
+    }
+
+    private static void WriteCacheBox(
+        int left,
+        int top,
+        int boxSize,
+        char l,
+        char r,
+        char fillCached,
+        char fillPartiallyCached,
+        char fillNotCached,
+        double percentCacheStart,
+        double percentCacheEnd)
+    {
+        if (EastAsianWidth.IsFullwidthOrWide(fillCached))
+        {
+            throw new ArgumentException();
+        }
+        if (EastAsianWidth.IsFullwidthOrWide(fillPartiallyCached))
+        {
+            throw new ArgumentException();
+        }
+        if (EastAsianWidth.IsFullwidthOrWide(fillNotCached))
+        {
+            throw new ArgumentException();
+        }
+        StringBuilder sb = new();
+        sb.Append(l);
+        boxSize -= 2;
+        double cPercent = 1.0 / boxSize;
+        for (int i = 0; i < boxSize; i++)
+        {
+            double startPercent = cPercent * i, endPercent = cPercent * (i + 1);
+            if (percentCacheEnd <= startPercent || percentCacheStart >= endPercent)
+            {
+                sb.Append(fillNotCached);
+            }
+            else if (percentCacheStart >= startPercent && percentCacheEnd <= endPercent)
+            {
+                sb.Append(fillCached);
+            }
+            else
+            {
+                sb.Append(fillPartiallyCached);
             }
         }
         sb.Append(r);

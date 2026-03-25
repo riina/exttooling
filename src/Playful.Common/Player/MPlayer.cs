@@ -40,7 +40,19 @@ public sealed class MPlayer : IDisposable, IList<PlayableSong>
         {
             if (_output != null && _song != null)
             {
-                displayState = new MPlayerDisplayState(_songs.IndexOfGuid(_guid), _songs.Count, _output.TimeApprox, _output.Duration, _output.PlayState, _song.Name, _song.Album, _song.Artist, "");
+                displayState = new MPlayerDisplayState(
+                    _songs.IndexOfGuid(_guid),
+                    _songs.Count,
+                    _output.TimeApprox,
+                    _output.TimeCacheStart,
+                    _output.TimeCacheEnd,
+                    _output.Duration,
+                    _output.PlayState,
+                    _song.Name,
+                    _song.Album,
+                    _song.Artist,
+                    _output.Debug,
+                    "");
                 return true;
             }
         }
@@ -184,6 +196,24 @@ public sealed class MPlayer : IDisposable, IList<PlayableSong>
                 return;
             }
             await _output.PlaySeekAsync(delta, cancellationToken);
+        }
+        finally
+        {
+            _are.Set();
+        }
+    }
+
+    public async Task SeekMaintainStateAsync(double delta = 0, CancellationToken cancellationToken = default)
+    {
+        EnsureNotDisposed();
+        _are.WaitOne();
+        try
+        {
+            if (_output == null)
+            {
+                return;
+            }
+            await _output.SeekMaintainStateAsync(delta, cancellationToken);
         }
         finally
         {
