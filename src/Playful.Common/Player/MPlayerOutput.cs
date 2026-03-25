@@ -365,51 +365,71 @@ public sealed class MPlayerOutput : IDisposable
                 ClearError();
                 UpdatePlayData();
                 cancellationToken.ThrowIfCancellationRequested();
-                // TODO make this vary as play progresses
                 int preferredSampleQueueSize = (int)(PreBufferInSeconds * _sampleRate);
+                int maxSampleQueueSize = (int)(MaxBufferInSeconds * _sampleRate);
                 int queuedSamples = _bufferToSampleCount.Values.Sum();
-                int remainingSamplesToAdd = Math.Max(0, preferredSampleQueueSize - queuedSamples);
-                int samplesFilled = 0;
-                Stopwatch sw = new();
-                while (remainingSamplesToAdd > 0)
+                int remainingSamplesToAdd;
+                if (queuedSamples < maxSampleQueueSize)
                 {
-                    sw.Restart();
-                    int samples = Queue(Math.Min(BufferSizeInSamples, remainingSamplesToAdd), cancellationToken);
-                    TimeSpan ts = sw.Elapsed;
-                    _fillSamplesPerMillisecond = samples / ts.TotalMilliseconds;
-                    UpdatePlayData();
-                    cancellationToken.ThrowIfCancellationRequested();
-                    remainingSamplesToAdd -= samples;
-                    if (samples <= 0)
+                    double fillSamplesPerMillisecond = _fillSamplesPerMillisecond;
+                    if (fillSamplesPerMillisecond <= 0)
                     {
-                        break;
+                        remainingSamplesToAdd = queuedSamples < preferredSampleQueueSize ? preferredSampleQueueSize - queuedSamples : 0;
                     }
-                    samplesFilled += samples;
-                }
-                if (samplesFilled <= 0)
-                {
-                    break;
-                }
-                if (preBufferLeft > 0)
-                {
-                    preBufferLeft -= samplesFilled / (double)_sampleRate;
-                    if (preBufferLeft > 0)
+                    else
                     {
-                        continue;
+                        int sampleBudget = (int)(10 * fillSamplesPerMillisecond);
+                        remainingSamplesToAdd = Math.Min(maxSampleQueueSize - queuedSamples, sampleBudget);
                     }
-                    source = _source;
-                    AL.SourcePlay(source);
-                    Ce(static ceSource => $"{nameof(AL)}.{nameof(AL.SourcePlay)} ({ceSource})", source);
                 }
                 else
                 {
-                    if (PlayState != PlayState.Playing)
+                    remainingSamplesToAdd = 0;
+                }
+                if (remainingSamplesToAdd > 0)
+                {
+                    int samplesFilled = 0;
+                    Stopwatch sw = new();
+                    while (remainingSamplesToAdd > 0)
                     {
+                        sw.Restart();
+                        int samples = Queue(Math.Min(BufferSizeInSamples, remainingSamplesToAdd), cancellationToken);
+                        TimeSpan ts = sw.Elapsed;
+                        UpdatePlayData();
+                        if (samples <= 0)
+                        {
+                            break;
+                        }
+                        _fillSamplesPerMillisecond = samples / ts.TotalMilliseconds;
+                        cancellationToken.ThrowIfCancellationRequested();
+                        remainingSamplesToAdd -= samples;
+                        samplesFilled += samples;
+                    }
+                    if (samplesFilled <= 0)
+                    {
+                        break;
+                    }
+                    if (preBufferLeft > 0)
+                    {
+                        preBufferLeft -= samplesFilled / (double)_sampleRate;
+                        if (preBufferLeft > 0)
+                        {
+                            continue;
+                        }
                         source = _source;
-                        AL.SourceStop(source);
-                        Ce(static ceSource => $"{nameof(AL)}.{nameof(AL.SourceStop)} ({ceSource})", source);
                         AL.SourcePlay(source);
                         Ce(static ceSource => $"{nameof(AL)}.{nameof(AL.SourcePlay)} ({ceSource})", source);
+                    }
+                    else
+                    {
+                        if (PlayState != PlayState.Playing)
+                        {
+                            source = _source;
+                            AL.SourceStop(source);
+                            Ce(static ceSource => $"{nameof(AL)}.{nameof(AL.SourceStop)} ({ceSource})", source);
+                            AL.SourcePlay(source);
+                            Ce(static ceSource => $"{nameof(AL)}.{nameof(AL.SourcePlay)} ({ceSource})", source);
+                        }
                     }
                 }
                 // Wait for at least one buffer to finish processing
