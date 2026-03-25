@@ -54,6 +54,8 @@ public sealed class NorcoManager : IDisposable
     private static Dictionary<string, SongLoader> s_loaders;
 
     private readonly PlaylistManager _playlistManager;
+    private readonly bool _showDebug;
+    private readonly bool _showCacheInfo;
     private volatile int _pendingChanges;
     private Guid _playlistSelector;
 
@@ -64,6 +66,8 @@ public sealed class NorcoManager : IDisposable
 
     public NorcoManager(NorcoOptions options)
     {
+        _showDebug = options.ShowDebug;
+        _showCacheInfo = options.ShowCacheInfo;
         _playlistManager = new PlaylistManager(PlaylistManagerOnUpdatedPlaylist, PlaylistManagerChanged);
         _currentPlaylist = new Playlist("", Array.Empty<JsonElement>());
         if (options.ListenPort is { } listenPort)
@@ -206,6 +210,8 @@ public sealed class NorcoManager : IDisposable
                             CancellationTokenSource mpts = new();
                             Task t = mp.StartExecuteAsync(mpts.Token);
                             MPlayerDisplay display = new();
+                            display.ShowDebug = _showDebug;
+                            display.ShowCacheInfo = _showCacheInfo;
                             Task dt = Task.Run(async () =>
                             {
                                 using MPlayerDisplay mpd = display;

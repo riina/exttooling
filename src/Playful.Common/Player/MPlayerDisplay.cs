@@ -9,6 +9,8 @@ public sealed class MPlayerDisplay : IDisposable
 {
     private const int CrapGap = 33;
     private const int MaxBoxWidth = 50;
+    public bool ShowDebug { get; set; }
+    public bool ShowCacheInfo { get; set; }
     private readonly AutoResetEvent _are;
     private readonly Stopwatch _sw;
     private MPlayerDisplayState _displayState;
@@ -155,15 +157,15 @@ public sealed class MPlayerDisplay : IDisposable
         {
             WriteBox(left, my++, boxSize, '│', '│', album, _albumScroll, CrapGap);
         }
-        if (debug != null && my < xy.Y)
-        {
-            WriteBox(left, my++, boxSize, '│', '│', debug, _debugScroll, CrapGap);
-        }
         if (my < xy.Y)
         {
             WriteBox(left, my++, boxSize, '│', '│', artist, _artistScroll, CrapGap);
         }
-        if (my < xy.Y)
+        if (ShowDebug && debug != null && my < xy.Y)
+        {
+            WriteBox(left, my++, boxSize, '│', '│', debug, _debugScroll, CrapGap);
+        }
+        if (ShowCacheInfo && my < xy.Y)
         {
             WriteCacheBox(
                 left,

@@ -78,7 +78,7 @@ public class MidiPcm16X2Generator : Pcm16X2Generator
             int firstSequencerSample;
             do
             {
-                CreateNextBuffer(out firstSequencerSample, out eBuffer, out numSamples);
+                GetOrCreateNextBuffer(out firstSequencerSample, out eBuffer, out numSamples);
             } while (firstSequencerSample + numSamples <= _nextPlaybackSample && numSamples > 0);
             if (numSamples <= 0)
             {
@@ -101,14 +101,19 @@ public class MidiPcm16X2Generator : Pcm16X2Generator
 
     public override string GetDebugText()
     {
-        return $"seq:{_nextSequencerSample:X06} play:{_nextPlaybackSample:X06} {_nextSequencerSample - _nextPlaybackSample:X06}";
+        return $"s{_nextSequencerSample:X06}p{_nextPlaybackSample:X06}d{_nextSequencerSample - _nextPlaybackSample:X06}";
     }
 
-    private void CreateNextBuffer(out int firstSequencerSample, out Memory<short> eBuffer, out int numSamples)
+    private void GetOrCreateNextBuffer(out int firstSequencerSample, out Memory<short> buffer, out int numSamples)
     {
         firstSequencerSample = _nextSequencerSample;
-        eBuffer = new short[CacheBufferSamples * NumChannels];
-        numSamples = ReadAndCache(CacheBufferSamples, eBuffer);
+        if (_sampleCache.TryGetCacheBuffer(firstSequencerSample, out numSamples, out buffer))
+        {
+            _nextSequencerSample += numSamples;
+            return;
+        }
+        buffer = new short[CacheBufferSamples * NumChannels];
+        numSamples = ReadAndCache(CacheBufferSamples, buffer);
     }
 
     private int ReadAndCache(int samples, Memory<short> buffer)
@@ -121,7 +126,10 @@ public class MidiPcm16X2Generator : Pcm16X2Generator
         int numSamples = Math.Min(samples, available);
         var subMemory = buffer[..(numSamples * NumChannels)];
         _sequencer.RenderInterleavedInt16(subMemory.Span);
-        _sampleCache.TryAdd(new Range(_nextSequencerSample, _nextSequencerSample + numSamples), subMemory);
+        if (!_sampleCache.TryAdd(new Range(_nextSequencerSample, _nextSequencerSample + numSamples), subMemory))
+        {
+            throw new InvalidOperationException();
+        }
         _nextSequencerSample += numSamples;
         return numSamples;
     }
