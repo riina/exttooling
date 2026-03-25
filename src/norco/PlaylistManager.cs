@@ -194,16 +194,26 @@ public sealed class PlaylistManager : IDisposable
 
     public bool TryLoadPlaylist(string path, [NotNullWhen(true)] out Playlist? playlist)
     {
-        try
+        int retries = 3;
+        do
         {
-            using FileStream fs = File.OpenRead(path);
-            playlist = JsonSerializer.Deserialize<Playlist>(fs, s_jOpts);
-            return playlist != null;
-        }
-        catch
-        {
-            // ignored
-        }
+            try
+            {
+                using FileStream fs = File.OpenRead(path);
+                playlist = JsonSerializer.Deserialize<Playlist>(fs, s_jOpts);
+                return playlist != null;
+            }
+            catch (FileNotFoundException)
+            {
+                playlist = null;
+                return false;
+            }
+            catch (IOException)
+            {
+                // ignored
+                Thread.Sleep(TimeSpan.FromMilliseconds(50));
+            }
+        } while (--retries > 0);
         playlist = null;
         return false;
     }

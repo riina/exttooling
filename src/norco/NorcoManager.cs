@@ -332,7 +332,7 @@ public sealed class NorcoManager : IDisposable
     {
         if (item.ValueKind == JsonValueKind.String && item.GetString() is { } itemStr)
         {
-            Uri uri = new(itemStr);
+            Uri uri = Util.ProcessNorcoUri(itemStr);
             List<PlayableSong> songs = new();
             using FileStream fs = File.OpenRead(uri.LocalPath);
             foreach (SongLoader loader in s_loaders.Values)
