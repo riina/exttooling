@@ -1,3 +1,4 @@
 dotnet publish src/norco -o <out> /p:NorcoExcludeDefaultBackends=true
 dotnet publish src/Playful.Gba -f net10.0 -o <out>/Plugins/Playful.Gba.pfsongloader
 dotnet publish src/Playful.OpenTK -f net10.0 -o <out>/Plugins/Playful.OpenTK.pfcontext
+dotnet publish src/Playful.StyledConsoleDisplay -f net10.0 -o <out>/Plugins/Playful.StyledConsoleDisplay.pfdisplay
