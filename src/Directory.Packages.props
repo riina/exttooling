@@ -6,7 +6,7 @@
     <!-- Package dependenices -->
     <PackageVersion Include="EA" Version="1.1.17100" />
     <PackageVersion Include="Fp.Plus" Version="0.29.0" />
-    <PackageVersion Include="OpenTK" Version="4.9.4" />
+    <PackageVersion Include="OpenTK.Audio.OpenAL" Version="4.9.4" />
     <PackageVersion Include="System.CommandLine" Version="2.0.5" />
     <!-- Test dependenices -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />

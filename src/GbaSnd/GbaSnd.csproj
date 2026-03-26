@@ -10,7 +10,7 @@
   <ItemGroup>
     <PackageReference Include="EA" />
     <PackageReference Include="Fp.Plus" />
-    <PackageReference Include="OpenTK" />
+    <PackageReference Include="OpenTK.Audio.OpenAL" />
     <PackageReference Include="System.CommandLine" />
   </ItemGroup>
 
