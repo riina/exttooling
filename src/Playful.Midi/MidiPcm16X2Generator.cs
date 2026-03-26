@@ -2,7 +2,7 @@ using MeltySynth;
 using Playful.Common;
 using Playful.Common.Generators;
 
-namespace Playful.Gba;
+namespace Playful.Midi;
 
 public class MidiPcm16X2Generator : Pcm16X2Generator
 {

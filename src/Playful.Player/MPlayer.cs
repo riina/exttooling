@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Diagnostics;
 
-namespace Playful.Common.Player;
+namespace Playful.Player;
 
 public sealed class MPlayer : IDisposable, IList<PlayableSong>
 {

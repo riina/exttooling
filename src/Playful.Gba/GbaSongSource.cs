@@ -1,6 +1,7 @@
 using Fp;
 using GbaMus;
 using MeltySynth;
+using Playful.Midi;
 
 namespace Playful.Gba;
 
@@ -10,7 +11,7 @@ public class GbaSongSource
     public static readonly IReadOnlyDictionary<string, string> CodeMap = s_codeMap;
     public readonly IReadOnlyList<GbaSong> Songs;
 
-    private const int SampleRate = 48000;//22050;
+    private const int SampleRate = 48000; //22050;
     private readonly MemoryRipper _mr;
     private readonly MidiFileSequencer _sequencer;
 
@@ -18,8 +19,9 @@ public class GbaSongSource
     {
         MemoryStream ms = new();
         stream.CopyTo(ms);
-        string gameCode = Processor.Instance.ReadUtf8StringFromOffset(ms, 0xA0, out _, out _, 12);
-        string makerCode = Processor.Instance.ReadUtf8StringFromOffset(ms, 0xB0, out _, out _, 2);
+        var tmpProcessor = new Processor();
+        string gameCode = tmpProcessor.ReadUtf8StringFromOffset(ms, 0xA0, out _, out _, 12);
+        string makerCode = tmpProcessor.ReadUtf8StringFromOffset(ms, 0xB0, out _, out _, 2);
         s_codeMap.TryGetValue(makerCode, out string? maker);
         _mr = new MemoryRipper(ms, settings ?? new GbaMusRipper.Settings(ImproveSoundfontCompliance: true));
         MemoryStream soundfontStream = new();

@@ -6,8 +6,8 @@ using System.Text;
 using System.Text.Json;
 using EA;
 using Playful;
-using Playful.Common.Player;
 using Playful.OpenTK;
+using Playful.Player;
 
 namespace norco;
 

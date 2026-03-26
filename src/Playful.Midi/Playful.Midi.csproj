@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NoWarn>NU5105</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Playful\Playful.csproj" />
+    <ProjectReference Include="..\Playful.Common\Playful.Common.csproj" />
+    <ProjectReference Include="..\..\ext\MeltySynth\MeltySynth\MeltySynth.csproj" />
+  </ItemGroup>
+
+</Project>

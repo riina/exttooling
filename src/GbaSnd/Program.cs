@@ -1,7 +1,7 @@
 ﻿using System.CommandLine;
-using Playful.Common.Player;
 using Playful.Gba;
 using Playful.OpenTK;
+using Playful.Player;
 
 var rootCommand = new GbaSndRootCommand("Play songs from GBA file");
 var parseResult = rootCommand.Parse(args);

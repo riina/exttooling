@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Playful\Playful.csproj" />
-    <ProjectReference Include="..\Playful.Common\Playful.Common.csproj" />
+    <ProjectReference Include="..\Playful.Player\Playful.Player.csproj" />
     <ProjectReference Include="..\Playful.Gba\Playful.Gba.csproj" />
     <ProjectReference Include="..\Playful.OpenTK\Playful.OpenTK.csproj" />
   </ItemGroup>

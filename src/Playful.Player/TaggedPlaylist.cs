@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace Playful.Common.Player;
+namespace Playful.Player;
 
 internal class TaggedPlaylist : IList<PlayableSong>
 {
