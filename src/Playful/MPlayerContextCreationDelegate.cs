@@ -1,3 +1,3 @@
-namespace Playful.Common.Player;
+namespace Playful;
 
 public delegate IPlayerContext MPlayerContextCreationDelegate();

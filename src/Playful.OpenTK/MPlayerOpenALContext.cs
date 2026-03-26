@@ -1,5 +1,4 @@
 using OpenTK.Audio.OpenAL;
-using Playful.Common.Player;
 
 namespace Playful.OpenTK;
 
@@ -40,14 +39,6 @@ public sealed class MPlayerOpenALContext : IPlayerContext
             ALC.CloseDevice(_dev);
             _dev = default;
             throw;
-        }
-    }
-
-    private void EnsureState()
-    {
-        if (_context.Handle == IntPtr.Zero)
-        {
-            throw new ObjectDisposedException(nameof(MPlayerOpenALContext));
         }
     }
 

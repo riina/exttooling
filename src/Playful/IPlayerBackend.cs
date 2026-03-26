@@ -1,4 +1,4 @@
-namespace Playful.Common.Player;
+namespace Playful;
 
 public interface IPlayerBackend : IDisposable
 {

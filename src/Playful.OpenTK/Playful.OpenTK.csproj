@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Playful.Common\Playful.Common.csproj" />
+    <ProjectReference Include="..\Playful\Playful.csproj" />
   </ItemGroup>
 
   <ItemGroup>

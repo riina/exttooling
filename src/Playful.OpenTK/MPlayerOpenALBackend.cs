@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using OpenTK.Audio.OpenAL;
-using Playful.Common.Player;
 
 namespace Playful.OpenTK;
 
@@ -256,7 +255,7 @@ public sealed class MPlayerOpenALBackend : IPlayerBackend
 
     private void EnsureNotDisposed()
     {
-        ObjectDisposedException.ThrowIf(_disposed, nameof(MPlayerOutput));
+        ObjectDisposedException.ThrowIf(_disposed, nameof(MPlayerOpenALBackend));
     }
 
     public void Dispose()

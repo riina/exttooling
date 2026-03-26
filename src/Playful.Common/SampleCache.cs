@@ -58,7 +58,7 @@ public class SampleCache<T> where T : unmanaged
         return true;
     }
 
-    private bool TryGetCacheBufferUncut(int index, out int resultStart, out int samples, out Memory<T> buffer)
+    public bool TryGetCacheBufferUncut(int index, out int resultStart, out int samples, out Memory<T> buffer)
     {
         int l = 0, u = _cache.Count - 1;
         CacheBuffer b;
