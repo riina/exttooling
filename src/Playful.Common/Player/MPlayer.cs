@@ -10,7 +10,7 @@ public sealed class MPlayer : IDisposable, IList<PlayableSong>
     public bool Ended => _plEnded;
 
     private readonly TaggedPlaylist _songs;
-    private readonly MPlayerContext _mPlayerContext;
+    private readonly IPlayerContext _mPlayerContext;
     private readonly AutoResetEvent _are;
     private readonly ManualResetEvent _mre;
     private volatile int _vec;
@@ -24,9 +24,9 @@ public sealed class MPlayer : IDisposable, IList<PlayableSong>
     private Guid _guid;
     private bool _plEnded;
 
-    public MPlayer()
+    public MPlayer(MPlayerContextCreationDelegate contextCreationDelegate)
     {
-        _mPlayerContext = new MPlayerContext();
+        _mPlayerContext = contextCreationDelegate();
         _songs = new TaggedPlaylist();
         _are = new AutoResetEvent(true);
         _mre = new ManualResetEvent(false);
@@ -102,7 +102,7 @@ public sealed class MPlayer : IDisposable, IList<PlayableSong>
                 {
                     _are.Set();
                 }
-                using MPlayerOutput p = _mPlayerContext.Stream(_song.GetGenerator());
+                using MPlayerOutput p = new(_song.GetGenerator(), _mPlayerContext.CreateBackend);
                 _are.WaitOne();
                 try
                 {

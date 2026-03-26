@@ -7,6 +7,7 @@ using System.Text.Json;
 using EA;
 using Playful;
 using Playful.Common.Player;
+using Playful.OpenTK;
 
 namespace norco;
 
@@ -204,7 +205,7 @@ public sealed class NorcoManager : IDisposable
                             {
                                 break;
                             }
-                            using MPlayer mp = new();
+                            using MPlayer mp = new(MPlayerOpenALContext.Create);
                             foreach (PlayableSong song in songs)
                                 mp.Add(song);
                             CancellationTokenSource mpts = new();

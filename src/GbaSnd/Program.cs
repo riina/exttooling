@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using Playful.Common.Player;
 using Playful.Gba;
+using Playful.OpenTK;
 
 var rootCommand = new GbaSndRootCommand("Play songs from GBA file");
 var parseResult = rootCommand.Parse(args);
@@ -75,7 +76,7 @@ class GbaSndRootCommand : RootCommand
             }
             return 0;
         }
-        using MPlayer mp = new();
+        using MPlayer mp = new(MPlayerOpenALContext.Create);
         foreach (GbaSong song in songs)
         {
             mp.Add(song);

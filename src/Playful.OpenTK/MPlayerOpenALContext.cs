@@ -1,14 +1,20 @@
 using OpenTK.Audio.OpenAL;
+using Playful.Common.Player;
 
-namespace Playful.Common.Player;
+namespace Playful.OpenTK;
 
-public sealed class MPlayerContext : IDisposable
+public sealed class MPlayerOpenALContext : IPlayerContext
 {
     private ALDevice _dev;
     private ALContext _context;
     private bool _disposed;
 
-    public MPlayerContext()
+    public static MPlayerOpenALContext Create()
+    {
+        return new MPlayerOpenALContext();
+    }
+
+    public MPlayerOpenALContext()
     {
         _dev = ALC.OpenDevice(null);
         _context = ALC.CreateContext(_dev, new ALContextAttributes());
@@ -41,15 +47,11 @@ public sealed class MPlayerContext : IDisposable
     {
         if (_context.Handle == IntPtr.Zero)
         {
-            throw new ObjectDisposedException(nameof(MPlayerContext));
+            throw new ObjectDisposedException(nameof(MPlayerOpenALContext));
         }
     }
 
-    public MPlayerOutput Stream(SoundGenerator soundGenerator, TextWriter? debug = null)
-    {
-        EnsureState();
-        return new MPlayerOutput(soundGenerator, debug);
-    }
+    public MPlayerBackendCreationDelegate CreateBackend => MPlayerOpenALBackend.Create;
 
     private void ReleaseUnmanagedResources()
     {
@@ -89,5 +91,5 @@ public sealed class MPlayerContext : IDisposable
         _disposed = true;
     }
 
-    ~MPlayerContext() => Dispose(false);
+    ~MPlayerOpenALContext() => Dispose(false);
 }

@@ -33,9 +33,4 @@
     <Company>riina</Company>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="OpenTK" />
-    <PackageReference Include="EA" />
-  </ItemGroup>
-
 </Project>
