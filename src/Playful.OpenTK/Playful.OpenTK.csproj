@@ -16,4 +16,8 @@
     <PackageReference Include="OpenTK" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="OpenTK.pfcontext.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

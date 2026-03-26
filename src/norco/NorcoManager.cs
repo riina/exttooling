@@ -1,12 +1,10 @@
 using System.Drawing;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using EA;
 using Playful;
-using Playful.OpenTK;
 using Playful.Player;
 
 namespace norco;
@@ -15,45 +13,8 @@ public sealed class NorcoManager : IDisposable
 {
     private const string Header = "</>:jmp n/m:prev/next space:play/pause q:ex";
 
-    static NorcoManager()
-    {
-        s_loaders = new Dictionary<string, SongLoader>();
-        foreach (string assemblyName in NorcoAssemblyNames.GetNames())
-        {
-            Assembly assembly;
-            try
-            {
-                assembly = Assembly.Load(assemblyName);
-            }
-            catch
-            {
-                continue;
-            }
-            foreach (Type type in assembly.GetExportedTypes()
-                         .Where(t => t.IsAssignableTo(typeof(SongLoader)) && !t.IsAbstract && t.GetConstructor(Array.Empty<Type>()) != null))
-            {
-                try
-                {
-                    if (type.GetCustomAttribute<SongLoaderInfoAttribute>() is not { } attr || s_loaders.ContainsKey(attr.Name))
-                    {
-                        continue;
-                    }
-                    if (Activator.CreateInstance(type) is not SongLoader sl)
-                    {
-                        continue;
-                    }
-                    s_loaders.Add(attr.Name, sl);
-                }
-                catch
-                {
-                    // ignored
-                }
-            }
-        }
-    }
-
-    private static Dictionary<string, SongLoader> s_loaders;
-
+    private readonly MPlayerContextCreationDelegate _contextCreationDelegate;
+    private readonly List<SongLoader> _songLoaders;
     private readonly PlaylistManager _playlistManager;
     private readonly bool _showDebug;
     private readonly bool _showCacheInfo;
@@ -65,8 +26,10 @@ public sealed class NorcoManager : IDisposable
     private Point _xy;
     private TcpListener? _tcp;
 
-    public NorcoManager(NorcoOptions options)
+    public NorcoManager(NorcoOptions options, MPlayerContextCreationDelegate contextCreationDelegate, IReadOnlyList<SongLoader> songLoaders)
     {
+        _contextCreationDelegate = contextCreationDelegate;
+        _songLoaders = songLoaders.ToList();
         _showDebug = options.ShowDebug;
         _showCacheInfo = options.ShowCacheInfo;
         _playlistManager = new PlaylistManager(PlaylistManagerOnUpdatedPlaylist, PlaylistManagerChanged);
@@ -205,7 +168,7 @@ public sealed class NorcoManager : IDisposable
                             {
                                 break;
                             }
-                            using MPlayer mp = new(MPlayerOpenALContext.Create);
+                            using MPlayer mp = new(_contextCreationDelegate);
                             foreach (PlayableSong song in songs)
                                 mp.Add(song);
                             CancellationTokenSource mpts = new();
@@ -344,7 +307,7 @@ public sealed class NorcoManager : IDisposable
             Uri uri = Util.ProcessNorcoUri(itemStr);
             List<PlayableSong> songs = new();
             using FileStream fs = File.OpenRead(uri.LocalPath);
-            foreach (SongLoader loader in s_loaders.Values)
+            foreach (SongLoader loader in _songLoaders)
             {
                 if (loader.TryLoadSongs(fs, uri, out IReadOnlyCollection<PlayableSong>? lSongs) && lSongs.Any())
                 {

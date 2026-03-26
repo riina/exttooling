@@ -8,18 +8,31 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="norco.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="norco.json" CopyToOutputDirectory="PreserveNewest"/>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="System.CommandLine"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Playful\Playful.csproj" />
-    <ProjectReference Include="..\Playful.Player\Playful.Player.csproj" />
-    <ProjectReference Include="..\Playful.Gba\Playful.Gba.csproj" />
-    <ProjectReference Include="..\Playful.OpenTK\Playful.OpenTK.csproj" />
+    <ProjectReference Include="..\Playful\Playful.csproj"/>
+    <ProjectReference Include="..\Playful.Player\Playful.Player.csproj"/>
+    <ProjectReference Include="..\..\ext\art\src\Artcore\Artcore.csproj"/>
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(NorcoExcludeDefaultBackends)'=='true'">
+    <DefineConstants>$(DefineConstants);NORCO_EXCLUDE_DEFAULT_BACKENDS</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(NorcoExcludeDefaultBackends)'!='true'">
+    <ProjectReference Include="..\Playful.Gba\Playful.Gba.csproj"/>
+    <ProjectReference Include="..\Playful.OpenTK\Playful.OpenTK.csproj"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="standard.pf_context_search_config.json" CopyToOutputDirectory="PreserveNewest"/>
+    <Content Include="standard.pf_songloader_search_config.json" CopyToOutputDirectory="PreserveNewest"/>
   </ItemGroup>
 
 </Project>

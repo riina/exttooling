@@ -1,0 +1,9 @@
+{
+    "Entries": [
+        {
+            "Path": "Plugins",
+            "DirectorySuffix": ".pfsongloader",
+            "FileNameSuffix": ".pfsongloader.json"
+        }
+    ]
+}

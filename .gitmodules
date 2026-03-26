@@ -4,3 +4,6 @@
 [submodule "ext/GbaMus"]
 	path = ext/GbaMus
 	url = https://github.com/riina/GbaMus
+[submodule "ext/art"]
+	path = ext/art
+	url = https://github.com/collectioneering/Art.git

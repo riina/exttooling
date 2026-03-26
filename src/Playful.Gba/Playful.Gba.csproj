@@ -20,4 +20,8 @@
     <ProjectReference Include="..\..\ext\MeltySynth\MeltySynth\MeltySynth.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Playful.Gba.pfsongloader.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

@@ -1,0 +1,9 @@
+{
+    "Entries": [
+        {
+            "Path": "Plugins",
+            "DirectorySuffix": ".pfcontext",
+            "FileNameSuffix": ".pfcontext.json"
+        }
+    ]
+}

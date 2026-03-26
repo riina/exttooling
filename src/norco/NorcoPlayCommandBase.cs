@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Playful;
 
 namespace norco;
 
@@ -31,7 +32,16 @@ public sealed class NorcoPlayCommandBase
         FileInfo? playlist = parseResult.GetValue(_playlistOption);
         bool showDebug = parseResult.GetValue(_showDebugOption);
         bool showCacheInfo = parseResult.GetValue(_showCacheOption);
-        using NorcoManager nm = new(new NorcoOptions(listenPort, showDebug, showCacheInfo));
+        MPlayerContextCreationDelegate contextCreationDelegate;
+        List<SongLoader> songLoaders;
+#if NORCO_EXCLUDE_DEFAULT_BACKENDS
+        contextCreationDelegate = await PfModuleUtility.GetContextDelegateFromDefaultLocationsAsync();
+        songLoaders = await PfModuleUtility.GetSongLoadersFromDefaultLocationsAsync();
+#else
+        contextCreationDelegate = Playful.OpenTK.MPlayerOpenALContext.Create;
+        songLoaders = PfModuleUtility.GetLegacySongLoaders();
+#endif
+        using NorcoManager nm = new(new NorcoOptions(listenPort, showDebug, showCacheInfo), contextCreationDelegate, songLoaders);
         await nm.ExecuteAsync();
         return 0;
     }
