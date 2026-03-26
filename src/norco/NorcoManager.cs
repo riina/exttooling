@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using Artcore;
 using EA;
 using Playful;
 using Playful.Player;
@@ -17,6 +18,7 @@ public sealed class NorcoManager : IDisposable
     private readonly MPlayerDisplayCreationDelegate _displayCreationDelegate;
     private readonly List<SongLoader> _songLoaders;
     private readonly PlaylistManager _playlistManager;
+    private readonly List<ALCModule> _loadedModules;
     private readonly bool _showDebug;
     private readonly bool _showCacheInfo;
     private volatile int _pendingChanges;
@@ -31,11 +33,13 @@ public sealed class NorcoManager : IDisposable
         NorcoOptions options,
         MPlayerContextCreationDelegate contextCreationDelegate,
         MPlayerDisplayCreationDelegate displayCreationDelegate,
-        IReadOnlyList<SongLoader> songLoaders)
+        IReadOnlyList<SongLoader> songLoaders,
+        IReadOnlyList<ALCModule> loadedModules)
     {
         _contextCreationDelegate = contextCreationDelegate;
         _displayCreationDelegate = displayCreationDelegate;
         _songLoaders = songLoaders.ToList();
+        _loadedModules = loadedModules.ToList();
         _showDebug = options.ShowDebug;
         _showCacheInfo = options.ShowCacheInfo;
         _playlistManager = new PlaylistManager(PlaylistManagerOnUpdatedPlaylist, PlaylistManagerChanged);

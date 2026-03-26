@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Artcore;
 using Playful;
 
 namespace norco;
@@ -35,10 +36,15 @@ public sealed class NorcoPlayCommandBase
         MPlayerContextCreationDelegate contextCreationDelegate;
         MPlayerDisplayCreationDelegate displayCreationDelegate;
         List<SongLoader> songLoaders;
+        List<ALCModule> loadedModules = [];
 #if NORCO_EXCLUDE_DEFAULT_BACKENDS
-        contextCreationDelegate = await PfModuleUtility.GetContextDelegateFromDefaultLocationsAsync();
-        displayCreationDelegate = await PfModuleUtility.GetDisplayDelegateFromDefaultLocationsAsync();
-        songLoaders = await PfModuleUtility.GetSongLoadersFromDefaultLocationsAsync();
+        (var contextModule, contextCreationDelegate) = await PfModuleUtility.GetContextDelegateFromDefaultLocationsAsync();
+        loadedModules.Add(contextModule);
+        (var displayModule, displayCreationDelegate) = await PfModuleUtility.GetDisplayDelegateFromDefaultLocationsAsync();
+        loadedModules.Add(displayModule);
+        var songLoaders2 = await PfModuleUtility.GetSongLoadersFromDefaultLocationsAsync();
+        songLoaders = songLoaders2.SelectMany(static v => v.Item2).ToList();
+        loadedModules.AddRange(songLoaders2.Select(static v => v.Item1));
 #else
         contextCreationDelegate = Playful.OpenTK.MPlayerOpenALContext.Create;
         displayCreationDelegate = Playful.StyledConsoleDisplay.MPlayerDisplay.Create;
@@ -50,7 +56,8 @@ public sealed class NorcoPlayCommandBase
                 showCacheInfo),
             contextCreationDelegate,
             displayCreationDelegate,
-            songLoaders
+            songLoaders,
+            loadedModules
         );
         await nm.ExecuteAsync();
         return 0;

@@ -10,7 +10,7 @@ internal static class PfModuleUtility
     const string displaySearchConfigFilePattern = "*.pf_display_search_config.json";
     const string songLoaderSearchConfigFilePattern = "*.pf_songloader_search_config.json";
 
-    public static Task<MPlayerContextCreationDelegate> GetContextDelegateFromDefaultLocationsAsync(CancellationToken cancellationToken = default)
+    public static Task<(ALCModule, MPlayerContextCreationDelegate)> GetContextDelegateFromDefaultLocationsAsync(CancellationToken cancellationToken = default)
     {
         string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
         List<string> searchConfigFiles = [];
@@ -21,7 +21,7 @@ internal static class PfModuleUtility
         return GetContextDelegateAsync(searchConfigFiles, cancellationToken);
     }
 
-    public static Task<MPlayerDisplayCreationDelegate> GetDisplayDelegateFromDefaultLocationsAsync(CancellationToken cancellationToken = default)
+    public static Task<(ALCModule, MPlayerDisplayCreationDelegate)> GetDisplayDelegateFromDefaultLocationsAsync(CancellationToken cancellationToken = default)
     {
         string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
         List<string> searchConfigFiles = [];
@@ -32,7 +32,7 @@ internal static class PfModuleUtility
         return GetDisplayDelegateAsync(searchConfigFiles, cancellationToken);
     }
 
-    public static Task<List<SongLoader>> GetSongLoadersFromDefaultLocationsAsync(CancellationToken cancellationToken = default)
+    public static Task<List<(ALCModule, List<SongLoader>)>> GetSongLoadersFromDefaultLocationsAsync(CancellationToken cancellationToken = default)
     {
         string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
         List<string> searchConfigFiles = [];
@@ -43,7 +43,7 @@ internal static class PfModuleUtility
         return GetSongLoadersAsync(searchConfigFiles, cancellationToken);
     }
 
-    public static async Task<MPlayerContextCreationDelegate> GetContextDelegateAsync(List<string> searchConfigFiles, CancellationToken cancellationToken = default)
+    public static async Task<(ALCModule, MPlayerContextCreationDelegate)> GetContextDelegateAsync(List<string> searchConfigFiles, CancellationToken cancellationToken = default)
     {
         var moduleProvider = new AggregateModuleProvider<ALCModule>(
             await ModuleSearchConfigurationUtility.GetModuleProvidersByPathsAsync(
@@ -58,12 +58,12 @@ internal static class PfModuleUtility
                 module.AssemblyLoadContext.Unload();
                 continue;
             }
-            return new MPlayerContextCreationDelegate(creatableTypes[0].CreationFunc);
+            return (module, new MPlayerContextCreationDelegate(creatableTypes[0].CreationFunc));
         }
         throw new InvalidOperationException($"Could not find an {nameof(IPlayerContext)}");
     }
 
-    public static async Task<MPlayerDisplayCreationDelegate> GetDisplayDelegateAsync(List<string> searchConfigFiles, CancellationToken cancellationToken = default)
+    public static async Task<(ALCModule, MPlayerDisplayCreationDelegate)> GetDisplayDelegateAsync(List<string> searchConfigFiles, CancellationToken cancellationToken = default)
     {
         var moduleProvider = new AggregateModuleProvider<ALCModule>(
             await ModuleSearchConfigurationUtility.GetModuleProvidersByPathsAsync(
@@ -78,22 +78,22 @@ internal static class PfModuleUtility
                 module.AssemblyLoadContext.Unload();
                 continue;
             }
-            return new MPlayerDisplayCreationDelegate(creatableTypes[0].CreationFunc);
+            return (module, new MPlayerDisplayCreationDelegate(creatableTypes[0].CreationFunc));
         }
         throw new InvalidOperationException($"Could not find an {nameof(IPlayerDisplay)}");
     }
 
-    public static async Task<List<SongLoader>> GetSongLoadersAsync(List<string> searchConfigFiles, CancellationToken cancellationToken = default)
+    public static async Task<List<(ALCModule, List<SongLoader>)>> GetSongLoadersAsync(List<string> searchConfigFiles, CancellationToken cancellationToken = default)
     {
         var moduleProvider = new AggregateModuleProvider<ALCModule>(
             await ModuleSearchConfigurationUtility.GetModuleProvidersByPathsAsync(
                 ModuleLoadConfiguration.Create(isCollectible: true, passthroughAssemblies: "Playful"),
                 searchConfigFiles, cancellationToken));
-        var songLoaders = new List<SongLoader>();
+        var songLoaders = new List<(ALCModule, List<SongLoader>)>();
         foreach (var location in moduleProvider.LoadModuleLocations())
         {
             var module = moduleProvider.LoadModule(location);
-            songLoaders.AddRange(GetCreatableTypes<SongLoader>(module.Assembly).Select(static v => v.CreationFunc()));
+            songLoaders.Add((module, GetCreatableTypes<SongLoader>(module.Assembly).Select(static v => v.CreationFunc()).ToList()));
         }
         return songLoaders;
     }
