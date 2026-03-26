@@ -1,4 +1,4 @@
-using Fp;
+using System.Text;
 using GbaMus;
 using MeltySynth;
 using Playful.Midi;
@@ -19,9 +19,12 @@ public class GbaSongSource
     {
         MemoryStream ms = new();
         stream.CopyTo(ms);
-        var tmpProcessor = new Processor();
-        string gameCode = tmpProcessor.ReadUtf8StringFromOffset(ms, 0xA0, out _, out _, 12);
-        string makerCode = tmpProcessor.ReadUtf8StringFromOffset(ms, 0xB0, out _, out _, 2);
+        Span<byte> tmp = stackalloc byte[12];
+        tmp.Clear();
+        ms.Position = 0xA0;
+        string gameCode = ReadUtf8String(ms, tmp[..12], out _, out _);
+        ms.Position = 0xB0;
+        string makerCode = ReadUtf8String(ms, tmp[..2], out _, out _);
         s_codeMap.TryGetValue(makerCode, out string? maker);
         _mr = new MemoryRipper(ms, settings ?? new GbaMusRipper.Settings(ImproveSoundfontCompliance: true));
         MemoryStream soundfontStream = new();
@@ -59,5 +62,25 @@ public class GbaSongSource
         songStream.Position = 0;
         MidiFile midiFile = new(songStream);
         return new MidiPcm16X2Generator(_sequencer, midiFile, SampleRate, midiFile.Length.TotalSeconds);
+    }
+
+    public static string ReadUtf8String(Stream stream, Span<byte> tmpBuffer, out int read, out int numBytes)
+    {
+        read = 0;
+        numBytes = 0;
+        do
+        {
+            int v = stream.ReadByte();
+            read += v == -1 ? 0 : 1;
+            if (v is -1 or 0) break;
+            tmpBuffer[numBytes++] = (byte)v;
+        } while (read < tmpBuffer.Length);
+
+        if (numBytes == 0)
+        {
+            return string.Empty;
+        }
+
+        return Encoding.UTF8.GetString(tmpBuffer[..numBytes]);
     }
 }

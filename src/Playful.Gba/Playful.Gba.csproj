@@ -9,7 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fp.Plus" />
     <!--<PackageReference Include="GbaMus" />-->
   </ItemGroup>
 
