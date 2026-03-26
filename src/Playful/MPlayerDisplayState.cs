@@ -1,4 +1,4 @@
-namespace Playful.Player;
+namespace Playful;
 
 public readonly struct MPlayerDisplayState
 {

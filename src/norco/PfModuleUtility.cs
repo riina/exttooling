@@ -7,6 +7,7 @@ namespace norco;
 internal static class PfModuleUtility
 {
     const string contextSearchConfigFilePattern = "*.pf_context_search_config.json";
+    const string displaySearchConfigFilePattern = "*.pf_display_search_config.json";
     const string songLoaderSearchConfigFilePattern = "*.pf_songloader_search_config.json";
 
     public static Task<MPlayerContextCreationDelegate> GetContextDelegateFromDefaultLocationsAsync(CancellationToken cancellationToken = default)
@@ -18,6 +19,17 @@ internal static class PfModuleUtility
             searchConfigFiles.AddRange(baseDirectoryForSearch.GetFiles(contextSearchConfigFilePattern).Select(static v => v.FullName));
         }
         return GetContextDelegateAsync(searchConfigFiles, cancellationToken);
+    }
+
+    public static Task<MPlayerDisplayCreationDelegate> GetDisplayDelegateFromDefaultLocationsAsync(CancellationToken cancellationToken = default)
+    {
+        string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+        List<string> searchConfigFiles = [];
+        if (new DirectoryInfo(baseDirectory) is { Exists: true } baseDirectoryForSearch)
+        {
+            searchConfigFiles.AddRange(baseDirectoryForSearch.GetFiles(displaySearchConfigFilePattern).Select(static v => v.FullName));
+        }
+        return GetDisplayDelegateAsync(searchConfigFiles, cancellationToken);
     }
 
     public static Task<List<SongLoader>> GetSongLoadersFromDefaultLocationsAsync(CancellationToken cancellationToken = default)
@@ -35,7 +47,7 @@ internal static class PfModuleUtility
     {
         var moduleProvider = new AggregateModuleProvider<ALCModule>(
             await ModuleSearchConfigurationUtility.GetModuleProvidersByPathsAsync(
-                ModuleLoadConfiguration.Create(passthroughAssemblies: "Playful"),
+                ModuleLoadConfiguration.Create(isCollectible: true, passthroughAssemblies: "Playful"),
                 searchConfigFiles, cancellationToken));
         foreach (var location in moduleProvider.LoadModuleLocations())
         {
@@ -51,11 +63,31 @@ internal static class PfModuleUtility
         throw new InvalidOperationException($"Could not find an {nameof(IPlayerContext)}");
     }
 
+    public static async Task<MPlayerDisplayCreationDelegate> GetDisplayDelegateAsync(List<string> searchConfigFiles, CancellationToken cancellationToken = default)
+    {
+        var moduleProvider = new AggregateModuleProvider<ALCModule>(
+            await ModuleSearchConfigurationUtility.GetModuleProvidersByPathsAsync(
+                ModuleLoadConfiguration.Create(isCollectible: true, passthroughAssemblies: "Playful"),
+                searchConfigFiles, cancellationToken));
+        foreach (var location in moduleProvider.LoadModuleLocations())
+        {
+            var module = moduleProvider.LoadModule(location);
+            var creatableTypes = GetCreatableTypes<IPlayerDisplay>(module.Assembly);
+            if (creatableTypes.Count == 0)
+            {
+                module.AssemblyLoadContext.Unload();
+                continue;
+            }
+            return new MPlayerDisplayCreationDelegate(creatableTypes[0].CreationFunc);
+        }
+        throw new InvalidOperationException($"Could not find an {nameof(IPlayerDisplay)}");
+    }
+
     public static async Task<List<SongLoader>> GetSongLoadersAsync(List<string> searchConfigFiles, CancellationToken cancellationToken = default)
     {
         var moduleProvider = new AggregateModuleProvider<ALCModule>(
             await ModuleSearchConfigurationUtility.GetModuleProvidersByPathsAsync(
-                ModuleLoadConfiguration.Create(passthroughAssemblies: "Playful"),
+                ModuleLoadConfiguration.Create(isCollectible: true, passthroughAssemblies: "Playful"),
                 searchConfigFiles, cancellationToken));
         var songLoaders = new List<SongLoader>();
         foreach (var location in moduleProvider.LoadModuleLocations())

@@ -14,6 +14,7 @@ public sealed class NorcoManager : IDisposable
     private const string Header = "</>:jmp n/m:prev/next space:play/pause q:ex";
 
     private readonly MPlayerContextCreationDelegate _contextCreationDelegate;
+    private readonly MPlayerDisplayCreationDelegate _displayCreationDelegate;
     private readonly List<SongLoader> _songLoaders;
     private readonly PlaylistManager _playlistManager;
     private readonly bool _showDebug;
@@ -26,9 +27,14 @@ public sealed class NorcoManager : IDisposable
     private Point _xy;
     private TcpListener? _tcp;
 
-    public NorcoManager(NorcoOptions options, MPlayerContextCreationDelegate contextCreationDelegate, IReadOnlyList<SongLoader> songLoaders)
+    public NorcoManager(
+        NorcoOptions options,
+        MPlayerContextCreationDelegate contextCreationDelegate,
+        MPlayerDisplayCreationDelegate displayCreationDelegate,
+        IReadOnlyList<SongLoader> songLoaders)
     {
         _contextCreationDelegate = contextCreationDelegate;
+        _displayCreationDelegate = displayCreationDelegate;
         _songLoaders = songLoaders.ToList();
         _showDebug = options.ShowDebug;
         _showCacheInfo = options.ShowCacheInfo;
@@ -173,12 +179,12 @@ public sealed class NorcoManager : IDisposable
                                 mp.Add(song);
                             CancellationTokenSource mpts = new();
                             Task t = mp.StartExecuteAsync(mpts.Token);
-                            MPlayerDisplay display = new();
+                            IPlayerDisplay display = _displayCreationDelegate();
                             display.ShowDebug = _showDebug;
                             display.ShowCacheInfo = _showCacheInfo;
                             Task dt = Task.Run(async () =>
                             {
-                                using MPlayerDisplay mpd = display;
+                                using IPlayerDisplay mpd = display;
                                 await mpd.ExecuteAsync(mpts.Token);
                             }, mpts.Token);
                             bool playing = true;

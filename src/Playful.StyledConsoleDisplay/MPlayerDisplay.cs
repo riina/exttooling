@@ -3,9 +3,9 @@ using System.Drawing;
 using System.Text;
 using EA;
 
-namespace Playful.Player;
+namespace Playful.StyledConsoleDisplay;
 
-public sealed class MPlayerDisplay : IDisposable
+public sealed class MPlayerDisplay : IPlayerDisplay
 {
     private const int CrapGap = 33;
     private const int MaxBoxWidth = 50;
@@ -23,6 +23,11 @@ public sealed class MPlayerDisplay : IDisposable
     private int _debugScroll;
     private RunTask? _displayTask;
     //private int _scrollCtr;
+
+    public static MPlayerDisplay Create()
+    {
+        return new MPlayerDisplay();
+    }
 
     public MPlayerDisplay()
     {
@@ -54,7 +59,7 @@ public sealed class MPlayerDisplay : IDisposable
         return execute;
     }
 
-    public async Task ExecuteInternalAsync(CancellationToken cancellationToken = default)
+    private async Task ExecuteInternalAsync(CancellationToken cancellationToken = default)
     {
         EnsureNotDisposed();
         Console.CursorVisible = false;

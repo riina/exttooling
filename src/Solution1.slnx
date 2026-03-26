@@ -10,6 +10,7 @@
   <Project Path="Playful.Midi/Playful.Midi.csproj" />
   <Project Path="Playful.OpenTK\Playful.OpenTK.csproj" />
   <Project Path="Playful.Player/Playful.Player.csproj" />
+  <Project Path="Playful.StyledConsoleDisplay/Playful.StyledConsoleDisplay.csproj" />
   <Project Path="Playful/Playful.csproj" />
   <Project Path="Playful.Common/Playful.Common.csproj" />
   <Project Path="Playful.Gba/Playful.Gba.csproj" />

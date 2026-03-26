@@ -33,15 +33,25 @@ public sealed class NorcoPlayCommandBase
         bool showDebug = parseResult.GetValue(_showDebugOption);
         bool showCacheInfo = parseResult.GetValue(_showCacheOption);
         MPlayerContextCreationDelegate contextCreationDelegate;
+        MPlayerDisplayCreationDelegate displayCreationDelegate;
         List<SongLoader> songLoaders;
 #if NORCO_EXCLUDE_DEFAULT_BACKENDS
         contextCreationDelegate = await PfModuleUtility.GetContextDelegateFromDefaultLocationsAsync();
+        displayCreationDelegate = await PfModuleUtility.GetDisplayDelegateFromDefaultLocationsAsync();
         songLoaders = await PfModuleUtility.GetSongLoadersFromDefaultLocationsAsync();
 #else
         contextCreationDelegate = Playful.OpenTK.MPlayerOpenALContext.Create;
+        displayCreationDelegate = Playful.StyledConsoleDisplay.MPlayerDisplay.Create;
         songLoaders = PfModuleUtility.GetLegacySongLoaders();
 #endif
-        using NorcoManager nm = new(new NorcoOptions(listenPort, showDebug, showCacheInfo), contextCreationDelegate, songLoaders);
+        using NorcoManager nm = new(
+            new NorcoOptions(listenPort,
+                showDebug,
+                showCacheInfo),
+            contextCreationDelegate,
+            displayCreationDelegate,
+            songLoaders
+        );
         await nm.ExecuteAsync();
         return 0;
     }

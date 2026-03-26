@@ -9,9 +9,13 @@
 
   <ItemGroup>
     <Content Include="norco.json" CopyToOutputDirectory="PreserveNewest"/>
+    <Content Update="standard.pf_display_search_config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="EA"/>
     <PackageReference Include="System.CommandLine"/>
   </ItemGroup>
 
@@ -28,10 +32,12 @@
   <ItemGroup Condition="'$(NorcoExcludeDefaultBackends)'!='true'">
     <ProjectReference Include="..\Playful.Gba\Playful.Gba.csproj"/>
     <ProjectReference Include="..\Playful.OpenTK\Playful.OpenTK.csproj"/>
+    <ProjectReference Include="..\Playful.StyledConsoleDisplay\Playful.StyledConsoleDisplay.csproj"/>
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="standard.pf_context_search_config.json" CopyToOutputDirectory="PreserveNewest"/>
+    <Content Include="standard.pf_display_search_config.json" CopyToOutputDirectory="PreserveNewest"/>
     <Content Include="standard.pf_songloader_search_config.json" CopyToOutputDirectory="PreserveNewest"/>
   </ItemGroup>
 

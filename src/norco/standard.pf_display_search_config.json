@@ -1,0 +1,9 @@
+{
+    "Entries": [
+        {
+            "Path": "Plugins",
+            "DirectorySuffix": ".pfdisplay",
+            "FileNameSuffix": ".pfdisplay.json"
+        }
+    ]
+}
