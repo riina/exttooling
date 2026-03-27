@@ -5,7 +5,8 @@ using EA;
 
 namespace Playful.StyledConsoleDisplay;
 
-public sealed class MPlayerDisplay : IPlayerDisplay
+[ReferenceName(nameof(StyledConsolePlayerDisplay))]
+public sealed class StyledConsolePlayerDisplay : IPlayerDisplay
 {
     private const int CrapGap = 33;
     private const int MaxBoxWidth = 50;
@@ -24,12 +25,12 @@ public sealed class MPlayerDisplay : IPlayerDisplay
     private RunTask? _displayTask;
     //private int _scrollCtr;
 
-    public static MPlayerDisplay Create()
+    public static StyledConsolePlayerDisplay Create()
     {
-        return new MPlayerDisplay();
+        return new StyledConsolePlayerDisplay();
     }
 
-    public MPlayerDisplay()
+    public StyledConsolePlayerDisplay()
     {
         _are = new AutoResetEvent(true);
         _sw = new Stopwatch();
@@ -535,10 +536,7 @@ public sealed class MPlayerDisplay : IPlayerDisplay
 
     private void EnsureNotDisposed()
     {
-        if (_disposed)
-        {
-            throw new ObjectDisposedException(nameof(MPlayerDisplay));
-        }
+        ObjectDisposedException.ThrowIf(_disposed, this);
     }
 
     public void Dispose()

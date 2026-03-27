@@ -3,7 +3,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using Artcore;
 using EA;
 using Playful;
 using Playful.Player;
@@ -18,7 +17,7 @@ public sealed class NorcoManager : IDisposable
     private readonly MPlayerDisplayCreationDelegate _displayCreationDelegate;
     private readonly List<SongLoader> _songLoaders;
     private readonly PlaylistManager _playlistManager;
-    private readonly List<ALCModule> _loadedModules;
+    private readonly List<PfModuleInfo> _loadedModules;
     private readonly bool _showDebug;
     private readonly bool _showCacheInfo;
     private volatile int _pendingChanges;
@@ -34,7 +33,7 @@ public sealed class NorcoManager : IDisposable
         MPlayerContextCreationDelegate contextCreationDelegate,
         MPlayerDisplayCreationDelegate displayCreationDelegate,
         IReadOnlyList<SongLoader> songLoaders,
-        IReadOnlyList<ALCModule> loadedModules)
+        IReadOnlyList<PfModuleInfo> loadedModules)
     {
         _contextCreationDelegate = contextCreationDelegate;
         _displayCreationDelegate = displayCreationDelegate;
@@ -178,12 +177,9 @@ public sealed class NorcoManager : IDisposable
                             {
                                 break;
                             }
-                            using MPlayer mp = new(_contextCreationDelegate);
-                            foreach (PlayableSong song in songs)
-                                mp.Add(song);
                             CancellationTokenSource mpts = new();
-                            Task t = mp.StartExecuteAsync(mpts.Token);
                             IPlayerDisplay display = _displayCreationDelegate();
+                            using MPlayer mp = new(_contextCreationDelegate, display.GetDebugWriter);
                             display.ShowDebug = _showDebug;
                             display.ShowCacheInfo = _showCacheInfo;
                             Task dt = Task.Run(async () =>
@@ -191,6 +187,9 @@ public sealed class NorcoManager : IDisposable
                                 using IPlayerDisplay mpd = display;
                                 await mpd.ExecuteAsync(mpts.Token);
                             }, mpts.Token);
+                            foreach (PlayableSong song in songs)
+                                mp.Add(song);
+                            Task t = mp.StartExecuteAsync(mpts.Token);
                             bool playing = true;
                             while (true)
                             {
@@ -415,6 +414,12 @@ public sealed class NorcoManager : IDisposable
     public void Dispose()
     {
         _playlistManager.Dispose();
+        for (int i = _loadedModules.Count - 1; i >= 0; i--)
+        {
+            _loadedModules[i].Dispose();
+            _loadedModules[i] = null!;
+            _loadedModules.RemoveAt(i);
+        }
         _tcp?.Stop();
     }
 }

@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NoWarn>NU5105</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Playful\Playful.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EA" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Playful.DiagnosticConsoleDisplay.pfdisplay.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

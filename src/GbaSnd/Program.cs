@@ -76,7 +76,7 @@ class GbaSndRootCommand : RootCommand
             }
             return 0;
         }
-        using MPlayer mp = new(MPlayerOpenALContext.Create);
+        using MPlayer mp = new(OpenALPlayerContext.Create);
         foreach (GbaSong song in songs)
         {
             mp.Add(song);

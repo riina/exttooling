@@ -255,7 +255,7 @@ public sealed class MPlayerOpenALBackend : IPlayerBackend
 
     private void EnsureNotDisposed()
     {
-        ObjectDisposedException.ThrowIf(_disposed, nameof(MPlayerOpenALBackend));
+        ObjectDisposedException.ThrowIf(_disposed, this);
     }
 
     public void Dispose()

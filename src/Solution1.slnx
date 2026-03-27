@@ -13,6 +13,7 @@
   <Project Path="Playful.StyledConsoleDisplay/Playful.StyledConsoleDisplay.csproj" />
   <Project Path="Playful/Playful.csproj" />
   <Project Path="Playful.Common/Playful.Common.csproj" />
+  <Project Path="Playful.DiagnosticConsoleDisplay/Playful.DiagnosticConsoleDisplay.csproj" />
   <Project Path="Playful.Gba/Playful.Gba.csproj" />
   <Project Path="../ext/Art/src/Artcore/Artcore.csproj" />
   <Project Path="../ext/GbaMus/GbaMus/GbaMus.csproj" />

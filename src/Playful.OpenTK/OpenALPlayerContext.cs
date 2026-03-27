@@ -2,18 +2,19 @@ using OpenTK.Audio.OpenAL;
 
 namespace Playful.OpenTK;
 
-public sealed class MPlayerOpenALContext : IPlayerContext
+[ReferenceName(nameof(OpenALPlayerContext))]
+public sealed class OpenALPlayerContext : IPlayerContext
 {
     private ALDevice _dev;
     private ALContext _context;
     private bool _disposed;
 
-    public static MPlayerOpenALContext Create()
+    public static OpenALPlayerContext Create()
     {
-        return new MPlayerOpenALContext();
+        return new OpenALPlayerContext();
     }
 
-    public MPlayerOpenALContext()
+    public OpenALPlayerContext()
     {
         _dev = ALC.OpenDevice(null);
         _context = ALC.CreateContext(_dev, new ALContextAttributes());
@@ -80,5 +81,5 @@ public sealed class MPlayerOpenALContext : IPlayerContext
         _disposed = true;
     }
 
-    ~MPlayerOpenALContext() => Dispose(false);
+    ~OpenALPlayerContext() => Dispose(false);
 }

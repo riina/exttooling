@@ -13,6 +13,7 @@ public sealed class MPlayer : IDisposable, IList<PlayableSong>
     private readonly IPlayerContext _mPlayerContext;
     private readonly AutoResetEvent _are;
     private readonly ManualResetEvent _mre;
+    private readonly DebugWriterRetrievalDelegate? _debugLoggerRetrievalDelegate;
     private volatile int _vec;
     private Stopwatch _sw;
     private int _index;
@@ -24,13 +25,14 @@ public sealed class MPlayer : IDisposable, IList<PlayableSong>
     private Guid _guid;
     private bool _plEnded;
 
-    public MPlayer(MPlayerContextCreationDelegate contextCreationDelegate)
+    public MPlayer(MPlayerContextCreationDelegate contextCreationDelegate, DebugWriterRetrievalDelegate? debugLoggerRetrievalDelegate = null)
     {
         _mPlayerContext = contextCreationDelegate();
         _songs = new TaggedPlaylist();
         _are = new AutoResetEvent(true);
         _mre = new ManualResetEvent(false);
         _sw = new Stopwatch();
+        _debugLoggerRetrievalDelegate = debugLoggerRetrievalDelegate;
     }
 
     public bool TryGetDisplayState(out MPlayerDisplayState displayState)
@@ -102,7 +104,7 @@ public sealed class MPlayer : IDisposable, IList<PlayableSong>
                 {
                     _are.Set();
                 }
-                using MPlayerOutput p = new(_song.GetGenerator(), _mPlayerContext.CreateBackend);
+                using MPlayerOutput p = new(_song.GetGenerator(), _mPlayerContext.CreateBackend, _debugLoggerRetrievalDelegate?.Invoke());
                 _are.WaitOne();
                 try
                 {

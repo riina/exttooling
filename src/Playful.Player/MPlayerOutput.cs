@@ -79,7 +79,7 @@ public sealed class MPlayerOutput : IDisposable
     private readonly SoundGenerator _generator;
     private readonly int _sampleRate;
     private readonly int _numChannels;
-    private readonly TextWriter? _debug;
+    private readonly IDebugWriter? _debug;
     private IPlayerBackend? _backend;
     private int _baseSample;
     private bool _disposed;
@@ -97,7 +97,7 @@ public sealed class MPlayerOutput : IDisposable
         public void Stop() => Cts.Cancel();
     }
 
-    public MPlayerOutput(SoundGenerator generator, MPlayerBackendCreationDelegate backendCreationDelegate, TextWriter? debug = null)
+    public MPlayerOutput(SoundGenerator generator, MPlayerBackendCreationDelegate backendCreationDelegate, IDebugWriter? debug = null)
     {
         _generator = generator;
         _backendCreationDelegate = backendCreationDelegate;
@@ -310,7 +310,8 @@ public sealed class MPlayerOutput : IDisposable
         _running = true;
         try
         {
-            while (true)
+            bool ranDry = false;
+            while (!ranDry)
             {
                 UpdatePlayData();
                 cancellationToken.ThrowIfCancellationRequested();
@@ -347,6 +348,7 @@ public sealed class MPlayerOutput : IDisposable
                         UpdatePlayData();
                         if (samples <= 0)
                         {
+                            ranDry = true;
                             break;
                         }
                         _fillSamplesPerMillisecond = samples / ts.TotalMilliseconds;
@@ -405,7 +407,7 @@ public sealed class MPlayerOutput : IDisposable
 
     private void EnsureNotDisposed()
     {
-        ObjectDisposedException.ThrowIf(_disposed, nameof(MPlayerOutput));
+        ObjectDisposedException.ThrowIf(_disposed, this);
     }
 
     private Task GetPlayTaskResetIfComplete()
